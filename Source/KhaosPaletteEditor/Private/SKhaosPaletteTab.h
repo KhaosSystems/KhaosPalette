@@ -3,12 +3,14 @@
 #pragma once
 
 #include "AssetRegistry/AssetData.h"
+#include "Framework/SlateDelegates.h"
 #include "Styling/SlateColor.h"
 #include "Widgets/SCompoundWidget.h"
 
 class FAssetThumbnail;
 class FAssetThumbnailPool;
 class FActiveTimerHandle;
+class FMenuBuilder;
 class SBox;
 class SWindow;
 class UKhaosPalette;
