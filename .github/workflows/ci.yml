@@ -1,0 +1,31 @@
+# Build, test and release with KhaosSystems/unreal-actions. To release, run this workflow on main
+# with "Release the next version" ticked; the version comes from the commit messages.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: Release the next version
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  # Superseded branch and pull request builds are cancelled; releases always run to the end.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref_type == 'branch') }}
+
+jobs:
+  plugin:
+    uses: KhaosSystems/unreal-actions/.github/workflows/plugin.yml@v1
+    permissions:
+      contents: write # releases and badges
+    with:
+      engine-versions: '["5.8"]'
+      release: ${{ inputs.release == true }}
+    secrets:
+      discord-webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
