@@ -164,9 +164,14 @@ bool UKhaosPalette::RenameCategory(FName From, FName To)
 	{
 		return false;
 	}
+	const int32 FromIndex = Categories.IndexOfByPredicate([From](const FKhaosPaletteCategory& Category) { return Category.Name == From; });
+	const bool bUsedByEntries = Entries.ContainsByPredicate([From](const FKhaosPaletteEntry& Entry) { return Entry.Category == From; });
+	if (FromIndex == INDEX_NONE && !bUsedByEntries)
+	{
+		return false;
+	}
 	Modify();
 	// Merge into an existing target rather than listing the same name twice.
-	const int32 FromIndex = Categories.IndexOfByPredicate([From](const FKhaosPaletteCategory& Category) { return Category.Name == From; });
 	if (FromIndex != INDEX_NONE)
 	{
 		if (FindCategory(To))
@@ -219,7 +224,8 @@ bool UKhaosPalette::SetCategoryCollapsedByDefault(FName Name, bool bCollapsed)
 
 bool UKhaosPalette::RemoveCategory(FName Name)
 {
-	if (Name.IsNone())
+	const bool bUsedByEntries = Entries.ContainsByPredicate([Name](const FKhaosPaletteEntry& Entry) { return Entry.Category == Name; });
+	if (Name.IsNone() || (!FindCategory(Name) && !bUsedByEntries))
 	{
 		return false;
 	}
