@@ -1,4 +1,4 @@
-// Copyright Khaos Games ApS. All Rights Reserved.
+// Copyright Khaos Systems. All Rights Reserved.
 
 #include "KhaosPaletteEditorModule.h"
 
