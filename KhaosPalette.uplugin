@@ -1,0 +1,29 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "Khaos Palette",
+	"Description": "Artist-authored palettes of placeable assets (blueprints, meshes, particles, sounds...) shown in a dockable tab for drag-and-drop set dressing.",
+	"Category": "Khaos",
+	"CreatedBy": "Khaos Games ApS",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "KhaosPaletteRuntime",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "KhaosPaletteEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
