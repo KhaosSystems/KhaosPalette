@@ -32,7 +32,8 @@ RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE = "#E5484D", "#F5A623", "#F2D94E", "#46
 
 # Points on tab.png as fractions of its size (x, y): measure them again whenever tab.png is retaken.
 SEARCH, SIDEBAR, CATEGORY, TILE, FOLDED = (0.097, 0.134), (0.042, 0.281), (0.9, 0.189), (0.867, 0.289), (0.9, 0.864)
-TILE_ROW_EDGE = (0.947, 0.289)
+# The first tile (thumbnail and name) on tab.png as left, top, right, bottom fractions.
+FIRST_TILE = (0.087, 0.2125, 0.26, 0.4)
 # Screenshots are enlarged at most this much, so UI text stays sharp.
 MAX_SCALE = 1.3
 
@@ -44,7 +45,7 @@ SLIDES = [
         ("Fold away", FOLDED, PURPLE, "right")]},
     {"id": "02-drag", "layout": "close-up", "panel": "tab-large.png", "title": ("Drag", "it in"), "accent": RED},
     # target: where the tile is being placed in scene.png, as page x, y and ring radius (right half of the image).
-    {"id": "03-click", "layout": "split", "panel": "tab.png", "title": ("Click.", "Place."), "accent": GREEN,
+    {"id": "03-click", "layout": "split", "panel": "tab.png", "title": ("Click a tile", "Click to place"), "accent": GREEN,
      "target": (1600, 750, 150)},
     {"id": "04-categories", "layout": "colour", "panel": "tab-menu.png", "title": ("Sort into", "categories"),
      "accent": ORANGE},
@@ -292,21 +293,37 @@ def close_up(page, slide):
     page.logo("left:96px;bottom:72px")
 
 
+def step(number, left, top, colour):
+    """A numbered step marker."""
+    return (f'<div style="position:absolute;left:{left}px;top:{top}px;width:64px;height:64px;border-radius:50%;'
+            f'background:{colour};color:#111;font:900 38px Montserrat;display:flex;align-items:center;'
+            f'justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.45)">{number}</div>')
+
+
 def split(page, slide):
+    """Click to Place as two numbered steps: click a tile in the tab (1), click in the level (2)."""
     page.scene(820)
     page.add('<div style="position:absolute;left:0;top:0;bottom:0;width:820px;background:#121116"></div>')
     box = page.panel(slide["panel"], 96, 300, 740, max_width=628)
-    sx, sy = point(box, TILE_ROW_EDGE)
+    accent = slide["accent"]
+    rows = "".join(
+        f'<div style="display:flex;align-items:center;gap:26px;margin-bottom:18px">'
+        f'<div style="position:relative;width:64px;height:64px;flex:none">{step(n, 0, 0, accent)}</div>'
+        f'<span>{html.escape(line)}</span></div>'
+        for n, line in enumerate(slide["title"], 1))
+    page.add(f'<h1 class="display head" style="left:96px;top:64px;font-size:64px;line-height:1;text-shadow:none">{rows}</h1>')
+    # Step 1: the tile, outlined, numbered at its corner.
+    left, top = point(box, FIRST_TILE[:2])
+    right, bottom = point(box, FIRST_TILE[2:])
+    page.add(f'<div style="position:absolute;left:{left - 6}px;top:{top - 6}px;width:{right - left + 12}px;'
+             f'height:{bottom - top + 12}px;border:5px solid {accent};border-radius:8px"></div>',
+             step(1, right - 26, top - 38, accent))
+    # Step 2: with Click to Place on, the tile follows the cursor until the click in the level.
     tx, ty, r = slide["target"]
-    page.add(f'<h1 class="display head" style="left:96px;top:70px;font-size:96px;text-shadow:none">'
-             f'{html.escape(slide["title"][0])}<em style="color:{slide["accent"]}">{html.escape(slide["title"][1])}</em></h1>')
-    page.add(f'<svg style="position:absolute;left:0;top:0" width="1920" height="1080"><defs><marker id="a" markerWidth="8" '
-             f'markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#fff"/></marker></defs>'
-             f'<path d="M{sx + 14} {sy} C {sx + 220} {sy - 120}, {tx - r - 190} {ty - 120}, {tx - r - 15} {ty}" '
-             f'fill="none" stroke="#fff" stroke-width="5" marker-end="url(#a)"/>'
-             f'<circle cx="{tx}" cy="{ty}" r="{r}" fill="none" stroke="{slide["accent"]}" stroke-width="8"/></svg>')
-    # With Click to Place on, the tile follows the cursor until the click.
-    page.ghost(tx - 60, ty - 70, 120, slide["accent"])
+    page.add(f'<svg style="position:absolute;left:0;top:0" width="1920" height="1080">'
+             f'<circle cx="{tx}" cy="{ty}" r="{r}" fill="none" stroke="{accent}" stroke-width="8"/></svg>')
+    page.ghost(tx - 60, ty - 70, 120, accent)
+    page.add(step(2, tx + r * 0.7 - 32, ty - r * 0.7 - 32, accent))
     page.logo("right:72px;bottom:60px")
 
 

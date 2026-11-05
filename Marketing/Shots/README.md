@@ -27,5 +27,5 @@ menu or the viewport is in shot. No project name, level name, personal path or t
 | `fill.png` | Content Browser: right-click a prop > Add to Palette, New Palette from Selection highlighted | fill |
 | `asset.png` | The palette's properties (the tab's Edit button), Categories expanded, 640×400 | asset |
 
-After retaking `tab.png`, measure the callout points and `TILE_ROW_EDGE` at the top of `render.py` on it. After
+After retaking `tab.png`, measure the callout points and `FIRST_TILE` at the top of `render.py` on it. After
 retaking `scene.png`, check the click image's `target` still lands on an empty spot of the dock.
