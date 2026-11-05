@@ -41,15 +41,17 @@ SLIDES = [
         ("Categories", CATEGORY, GREEN, "right"), ("Drag or click", TILE, ORANGE, "right"),
         ("Fold away", FOLDED, PURPLE, "right")]},
     {"id": "02-drag", "layout": "close-up", "panel": "tab.png", "title": ("Drag", "it in"), "accent": RED},
-    # target: the placed prop in scene.png, as page x, y and ring radius on the right half of the image.
+    # target: where the tile is being placed in scene.png, as page x, y and ring radius (right half of the image).
     {"id": "03-click", "layout": "split", "panel": "tab.png", "title": ("Click.", "Place."), "accent": GREEN,
-     "target": (1600, 520, 200)},
+     "target": (1460, 760, 150)},
     {"id": "04-categories", "layout": "colour", "panel": "tab-menu.png", "title": ("Sort into", "categories"),
      "accent": ORANGE},
     {"id": "05-palettes", "layout": "large", "panel": "tab.png", "title": ("A palette", "per biome"), "accent": YELLOW},
-    {"id": "06-fade", "layout": "full", "panel": "fade.png", "title": ("Fades while", "you work"), "accent": RED},
-    {"id": "07-fill", "layout": "colour", "panel": "fill.png", "title": ("Add from", "anywhere"), "accent": PURPLE},
-    {"id": "08-asset", "layout": "colour", "panel": "asset.png", "title": ("Shared", "as assets"), "accent": BLUE},
+    {"id": "06-drawer", "layout": "drawer", "panel": "drawer.png", "title": ("Pin it", "to the side"), "accent": BLUE},
+    {"id": "07-fade", "layout": "drawer", "panel": "fade.png", "title": ("Fades while", "you work"), "accent": RED,
+     "faded": True},
+    {"id": "08-fill", "layout": "colour", "panel": "fill.png", "title": ("Add from", "anywhere"), "accent": PURPLE},
+    {"id": "09-asset", "layout": "colour", "panel": "asset.png", "title": ("Shared", "as assets"), "accent": GREEN},
 ]
 
 
@@ -84,7 +86,7 @@ body { position: relative; background: #111; color: #fff; font-family: 'Inter', 
 em { font-style: normal; display: block; }
 
 /* Mock of the palette tab, 540 px wide unscaled, for while tab.png doesn't exist. */
-.tab { position: absolute; width: 540px; height: 780px; background: #1A1A1A; border-radius: 6px; overflow: hidden;
+.tab { position: absolute; width: 540px; background: #1A1A1A; border-radius: 6px; overflow: hidden;
   transform-origin: 0 0; box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px #000; font-size: 15px; color: #C0C0C0; }
 .tab .title { height: 40px; background: #0F0F0F; display: flex; align-items: flex-end; padding-left: 8px; }
 .tab .title span { background: #1A1A1A; padding: 9px 14px; border-radius: 5px 5px 0 0; color: #EEE; display: flex;
@@ -94,7 +96,7 @@ em { font-style: normal; display: block; }
 .tab .search { flex: 1; height: 32px; background: #0F0F0F; border-radius: 4px; color: #6A6A6A; padding: 7px 12px; }
 .tab .btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
 .tab .btn img { width: 16px; }
-.tab .body { display: flex; height: 688px; }
+.tab .body { display: flex; height: calc(100% - 92px); }
 .tab .side { width: 52px; background: #141414; padding-top: 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .tab .side div { width: 36px; height: 36px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
 .tab .side div.on { background: #2C2C2C; box-shadow: inset 2px 0 0 #3E8BFF; }
@@ -104,7 +106,7 @@ em { font-style: normal; display: block; }
   height: 32px; display: flex; align-items: center; gap: 8px; }
 .tab .grid { display: grid; grid-template-columns: repeat(4, 110px); gap: 8px; }
 .tile { text-align: center; font-size: 12px; color: #A8A8A8; }
-.tile i { display: block; aspect-ratio: 1; border-radius: 4px; background: #2A2A2A; margin-bottom: 4px; }
+.tile i { display: block; aspect-ratio: 1; border-radius: 4px; background: #2A2A2A url('ICON_URI') center / 34% no-repeat; margin-bottom: 4px; }
 .tile.sel i { box-shadow: 0 0 0 2px #3E8BFF; }
 .menu { position: absolute; left: 180px; top: 120px; width: 250px; background: #1F1F1F; border-radius: 4px; padding: 6px 0;
   color: #D0D0D0; box-shadow: 0 12px 30px rgba(0,0,0,.6), 0 0 0 1px #000; }
@@ -113,7 +115,18 @@ em { font-style: normal; display: block; }
 .menu div.check::before { content: '\\2713'; position: absolute; left: 16px; }
 .menu hr { border: 0; border-top: 1px solid #333; margin: 5px 0; }
 .ghost { position: absolute; } .ghost i { box-shadow: 0 0 0 4px var(--c); }
+/* The editor's sidebar: docked tabs as a vertical strip, the open one as a drawer over the viewport. */
+.strip { position: absolute; right: 0; top: 0; bottom: 0; width: 40px; background: #151515; box-shadow: -1px 0 0 #000;
+  padding-top: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 15px; color: #9A9A9A; }
+.strip div { writing-mode: vertical-rl; padding: 14px 10px; display: flex; align-items: center; gap: 8px; }
+.strip div.on { background: #262626; color: #fff; box-shadow: inset -2px 0 0 #3E8BFF; }
+.strip img { width: 16px; }
+.tab.drawer { border-radius: 0; box-shadow: -30px 0 80px rgba(0,0,0,0.55), 0 0 0 1px #000; }
+.tab .dhead { height: 40px; background: #0F0F0F; display: flex; align-items: center; gap: 8px; padding: 0 12px; color: #EEE; font-weight: 500; }
+.tab .dhead img { width: 16px; } .tab .dhead span { margin-left: auto; display: flex; }
 """
+
+CSS = CSS.replace("ICON_URI", svg_uri("PaletteSidebar", "#3A3A3A"))
 
 GEAR = ('<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#C0C0C0" d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6'
         '-2-3.5-2.5 1a7.6 7.6 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.5-1-2 3.5L6.5 11a7.5 7.5 0 0 0 0 2'
@@ -121,27 +134,19 @@ GEAR = ('<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#C0C0C0" d=
         '1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>')
 SAVE = ('<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#C0C0C0" d="M5 3h11l4 4v12a2 2 0 0 1-2 2H6a2 2 '
         '0 0 1-2-2V5a2 2 0 0 1 1-2zm2 2v5h9V5zm5 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>')
+PIN = ('<svg width="16" height="16" viewBox="0 0 16 16"><path fill="#9A9A9A" d="M10 1l5 5-1.5.5-2.5 2.5.5 3-1.5 1.5'
+       '-3-3L3 15H1v-2l4-4-3-3L3.5 4.5l3 .5L9 2.5z"/></svg>')
 CURSOR = ('<svg width="44" height="56" viewBox="0 0 22 28"><path d="M1 1 L1 22 L7 17 L11 26 L15 24 L11 15 L19 15 Z" '
           'fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>')
-# For the mock tab's tiles until tab.png exists: props in scene.png as (name, centre x, centre y, crop size).
-PROPS = [
-    ("Palm_Tall", 1169, 532, 397), ("Fern_Bush", 1398, 553, 209), ("Ship_Wheel", 1670, 668, 177),
-    ("Palm_Small", 1550, 490, 190), ("Dress_Form", 657, 626, 219), ("Rock_Cluster", 630, 965, 220),
-    ("Crate_Stack", 1753, 605, 209), ("Stilt_Hut", 1450, 313, 250), ("Dock_Posts", 1790, 660, 240),
-    ("Leaf_Large", 230, 167, 344), ("Fence_Planks", 428, 710, 261), ("Pier_Deck", 1294, 814, 313),
-]
+# Tile names for the mock tab. Its tiles stay plain: only the editor draws clean thumbnails, so real ones come
+# with tab.png.
+NAMES = ["SM_Barrel", "SM_Cannon", "SM_Skull", "SM_Bottle", "SM_Rope_Knot", "SM_Cutlass", "SM_Oar", "SM_Lantern",
+         "SM_Palm_A", "SM_Palm_B", "SM_Coconut", "SM_Clam"]
 
 
-def mock_tile(prop, px, selected=False):
-    """A tile of the mock tab: the prop cropped from scene.png, or plain grey without it."""
-    name, cx, cy, size = prop
-    scene = SHOTS / "scene.png"
-    style = ""
-    if scene.exists():
-        k = px / size
-        style = (f" style=\"background:#2A2A2A url('{scene.as_uri()}') no-repeat;background-size:{1920 * k:.1f}px auto;"
-                 f"background-position:{-(cx - size / 2) * k:.1f}px {-(cy - size / 2) * k:.1f}px\"")
-    return f'<div class="tile{" sel" if selected else ""}"><i{style}></i>{name}</div>'
+def mock_tile(name, px=None, selected=False):
+    """A tile of the mock tab: a plain square with the asset name under it."""
+    return f'<div class="tile{" sel" if selected else ""}"><i></i>{name}</div>'
 
 
 class Page:
@@ -192,7 +197,7 @@ class Page:
             tile = f'<img src="{path.as_uri()}" style="width:{px}px;border-radius:4px;box-shadow:0 0 0 4px {colour}">'
         else:
             self.draft = True
-            tile = mock_tile(PROPS[0], px)
+            tile = mock_tile(NAMES[0])
         self.add(f'<div class="ghost" style="left:{left}px;top:{top}px;width:{px}px;--c:{colour}">{tile}</div>',
                  f'<div style="position:absolute;left:{left + px * 0.7}px;top:{top + px * 0.75}px">{CURSOR}</div>')
 
@@ -207,20 +212,22 @@ class Page:
         return f"<!doctype html><html><head><meta charset='utf-8'><style>{CSS}{css}</style></head><body>{''.join(self.parts)}</body></html>"
 
 
-def mock_tab(left, top, scale, menu=False):
+def mock_tab(left, top, scale, menu=False, height=780, drawer=False, opacity=1):
     sidebar = "".join(f'<div class="{"on" if i == 0 else ""}"><img src="{svg_uri("PaletteSidebar", c)}"></div>'
                       for i, c in enumerate([ORANGE, BLUE, GREEN]))
-    tiles = [mock_tile(p, 110, i == 0) for i, p in enumerate(PROPS)]
+    tiles = [mock_tile(n, selected=i == 0) for i, n in enumerate(NAMES)]
     menu_html = ('<div class="menu"><div>Icon</div><div class="hi">Rename Category...</div>'
                  '<div class="check">Open by Default</div><hr><div>Remove Category</div></div>') if menu else ""
-    return f"""<div class="tab" style="left:{left}px;top:{top}px;transform:scale({scale})">
-  <div class="title"><span><img src="{ICON}">Khaos Palette</span></div>
+    title = (f'<div class="dhead"><img src="{ICON}">Khaos Palette<span>{PIN}</span></div>' if drawer
+             else f'<div class="title"><span><img src="{ICON}">Khaos Palette</span></div>')
+    return f"""<div class="tab{" drawer" if drawer else ""}" style="left:{left}px;top:{top}px;height:{height}px;transform:scale({scale});opacity:{opacity}">
+  {title}
   <div class="bar"><div class="search">Search palette</div><div class="btn"><img src="{svg_uri("GroupByCategory", "#C0C0C0")}"></div>
     <div class="btn">{GEAR}</div><div class="btn">{SAVE}</div></div>
   <div class="body"><div class="side">{sidebar}</div><div class="main">
-    <div class="cat">&#9662; Island (8)</div><div class="grid">{"".join(tiles[:8])}</div>
-    <div class="cat">&#9662; Dock (4)</div><div class="grid">{"".join(tiles[8:])}</div>
-    <div class="cat">&#9656; Rocks (6)</div></div></div>{menu_html}
+    <div class="cat">&#9662; Pirate Den (8)</div><div class="grid">{"".join(tiles[:8])}</div>
+    <div class="cat">&#9662; Island (4)</div><div class="grid">{"".join(tiles[8:])}</div>
+    <div class="cat">&#9656; Caves (6)</div></div></div>{menu_html}
 </div>"""
 
 
@@ -287,6 +294,8 @@ def split(page, slide):
              f'<path d="M{sx + 14} {sy} C {sx + 220} {sy - 120}, {tx - r - 190} {ty - 120}, {tx - r - 15} {ty}" '
              f'fill="none" stroke="#fff" stroke-width="5" marker-end="url(#a)"/>'
              f'<circle cx="{tx}" cy="{ty}" r="{r}" fill="none" stroke="{slide["accent"]}" stroke-width="8"/></svg>')
+    # With Click to Place on, the tile follows the cursor until the click.
+    page.ghost(tx - 60, ty - 70, 120, slide["accent"])
     page.logo("right:72px;bottom:60px")
 
 
@@ -317,7 +326,23 @@ def full(page, slide):
     page.label(slide["title"], slide["accent"])
 
 
-LAYOUTS = {"cover": cover, "callouts": callouts, "close-up": close_up, "split": split, "colour": colour,
+def drawer(page, slide):
+    """The tab docked to the editor's sidebar, its drawer open over the viewport; faded for the fade image."""
+    if (SHOTS / slide["panel"]).exists():
+        return full(page, slide)
+    page.draft = True
+    page.scene()
+    page.add(f'<div class="strip"><div>Outliner</div><div>Details</div><div class="on"><img src="{ICON}">Khaos Palette</div></div>')
+    scale = 1.2
+    page.add(mock_tab(1880 - 540 * scale, 0, scale, height=1080 / scale, drawer=True,
+                      opacity=0.35 if slide.get("faded") else 1))
+    if slide.get("faded"):
+        page.add(f'<div style="position:absolute;left:760px;top:520px">{CURSOR}</div>')
+    page.logo("left:72px;top:60px")
+    page.label(slide["title"], slide["accent"])
+
+
+LAYOUTS = {"drawer": drawer, "cover": cover, "callouts": callouts, "close-up": close_up, "split": split, "colour": colour,
            "large": large, "full": full}
 
 
