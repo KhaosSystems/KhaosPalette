@@ -6,19 +6,17 @@ Khaos Palette
 
 ## Short description
 
-Your most-used props in one tab. Click a tile, then click in the level.
+The props you place most, one click from the level.
 
 ## Description
 
-Keep the props you place most in one tab beside the viewport.
+Set dressing means reaching for the same props again and again. Khaos Palette keeps them in one tab beside the
+viewport, sorted the way you work.
 
-- Click a tile, then click in the level. Or drag.
-- Sort tiles into collapsible categories.
-- One palette per biome, a click away in the sidebar.
-- Pin it as a drawer that fades while you work.
-- Add assets from the Content Browser or the level.
-- Palettes are assets: in source control, shared by the team.
-- Editor-only: nothing ships in your game.
+Click a tile, then click where it goes. Pin the tab to the side and it fades out of the way while you build. Palettes
+are plain assets, so the whole team dresses levels from the same set.
+
+Editor-only. Nothing ships in your game.
 
 ## Technical details
 
