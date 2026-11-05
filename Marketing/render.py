@@ -140,8 +140,13 @@ CURSOR = ('<svg width="44" height="56" viewBox="0 0 22 28"><path d="M1 1 L1 22 L
           'fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>')
 # Tile names for the mock tab. Its tiles stay plain: only the editor draws clean thumbnails, so real ones come
 # with tab.png.
-NAMES = ["SM_Barrel", "SM_Cannon", "SM_Skull", "SM_Bottle", "SM_Rope_Knot", "SM_Cutlass", "SM_Oar", "SM_Lantern",
-         "SM_Palm_A", "SM_Palm_B", "SM_Coconut", "SM_Clam"]
+# Sample data for the mock tab: a set-dressing palette for a dock level, as (category, assets, open).
+CATEGORIES = [
+    ("Dock", ["SM_BarrelBoat", "SM_WoodenOar", "SM_Bobber1", "SM_Rope_Knot", "SM_Chainlink2", "SM_PlankBridge",
+              "SM_Pirate_Canon", "SM_Bucket"], True),
+    ("Island", ["SM_PalmTree_01", "SM_PalmTree_02", "SM_PalmTreeShort", "SM_Coconut"], True),
+    ("Treasure", ["SM_PirateSkull", "SM_Bottle1", "SM_Cutlass", "SM_PearlClam", "SM_ShellSpiral"], False),
+]
 
 
 def mock_tile(name, px=None, selected=False):
@@ -197,7 +202,7 @@ class Page:
             tile = f'<img src="{path.as_uri()}" style="width:{px}px;border-radius:4px;box-shadow:0 0 0 4px {colour}">'
         else:
             self.draft = True
-            tile = mock_tile(NAMES[0])
+            tile = mock_tile(CATEGORIES[0][1][0])
         self.add(f'<div class="ghost" style="left:{left}px;top:{top}px;width:{px}px;--c:{colour}">{tile}</div>',
                  f'<div style="position:absolute;left:{left + px * 0.7}px;top:{top + px * 0.75}px">{CURSOR}</div>')
 
@@ -215,19 +220,21 @@ class Page:
 def mock_tab(left, top, scale, menu=False, height=780, drawer=False, opacity=1):
     sidebar = "".join(f'<div class="{"on" if i == 0 else ""}"><img src="{svg_uri("PaletteSidebar", c)}"></div>'
                       for i, c in enumerate([ORANGE, BLUE, GREEN]))
-    tiles = [mock_tile(n, selected=i == 0) for i, n in enumerate(NAMES)]
     menu_html = ('<div class="menu"><div>Icon</div><div class="hi">Rename Category...</div>'
                  '<div class="check">Open by Default</div><hr><div>Remove Category</div></div>') if menu else ""
     title = (f'<div class="dhead"><img src="{ICON}">Khaos Palette<span>{PIN}</span></div>' if drawer
              else f'<div class="title"><span><img src="{ICON}">Khaos Palette</span></div>')
+    categories = "".join(
+        f'<div class="cat">{"&#9662;" if is_open else "&#9656;"} {name} ({len(assets)})</div>'
+        + (f'<div class="grid">{"".join(mock_tile(a, selected=c == 0 and i == 0) for i, a in enumerate(assets))}</div>'
+           if is_open else "")
+        for c, (name, assets, is_open) in enumerate(CATEGORIES))
     return f"""<div class="tab{" drawer" if drawer else ""}" style="left:{left}px;top:{top}px;height:{height}px;transform:scale({scale});opacity:{opacity}">
   {title}
   <div class="bar"><div class="search">Search palette</div><div class="btn"><img src="{svg_uri("GroupByCategory", "#C0C0C0")}"></div>
     <div class="btn">{GEAR}</div><div class="btn">{SAVE}</div></div>
   <div class="body"><div class="side">{sidebar}</div><div class="main">
-    <div class="cat">&#9662; Pirate Den (8)</div><div class="grid">{"".join(tiles[:8])}</div>
-    <div class="cat">&#9662; Island (4)</div><div class="grid">{"".join(tiles[8:])}</div>
-    <div class="cat">&#9656; Caves (6)</div></div></div>{menu_html}
+    {categories}</div></div>{menu_html}
 </div>"""
 
 

@@ -22,5 +22,12 @@ Before shooting:
 | `fill.png` | The Content Browser with assets selected and right-click > Add to Palette open | fill |
 | `asset.png` | The palette's properties (the Edit button): name, description, icon and colour | asset |
 
+The palette in `tab.png` should match the stand-in, so the layouts and callouts line up: three palettes in the
+sidebar, and the open one laid out as
+
+- **Dock (8)**, open: barrel boat, oar, bobber, rope knot, chain, plank bridge, cannon, bucket
+- **Island (4)**, open: two palm trees, a short palm, a coconut
+- **Treasure (5)**, folded
+
 After adding `tab.png`, measure the callout points and `TILE_ROW_EDGE` at the top of `render.py` on it. After
 adding `scene.png`, set the click image's `target` to where the placed prop stands.
