@@ -335,7 +335,7 @@ def drawer(page, slide):
     page.add(f'<div class="strip"><div>Outliner</div><div>Details</div><div class="on"><img src="{ICON}">Khaos Palette</div></div>')
     scale = 1.2
     page.add(mock_tab(1880 - 540 * scale, 0, scale, height=1080 / scale, drawer=True,
-                      opacity=0.6 if slide.get("faded") else 1))  # Faded Opacity is a setting; 0.4 by default
+                      opacity=0.8 if slide.get("faded") else 1))  # Faded Opacity is a setting; 0.4 by default
     if slide.get("faded"):
         page.add(f'<div style="position:absolute;left:760px;top:520px">{CURSOR}</div>')
     page.logo("left:72px;top:60px")
