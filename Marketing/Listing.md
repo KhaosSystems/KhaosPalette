@@ -6,36 +6,46 @@ Khaos Palette
 
 ## Short description
 
-Palettes of the props you place most, one click away in a dockable tab. Drag or click a tile to dress your level.
+Your most-used props in one tab beside the viewport. Click a tile, then click in the level. Palettes are assets the whole team shares.
 
 ## Description
 
-Set dressing means reaching for the same few dozen assets again and again, and digging through the Content
-Browser for each one. Khaos Palette keeps them at hand. A palette is an asset that lists the things you place
-(Blueprint actors, meshes, Niagara systems, sounds, decals), and a dockable tab shows it as a grid of
-thumbnails beside the viewport. Make one per biome, per level or per artist, and switch between them from the
-sidebar.
+Set dressing means reaching for the same few dozen props again and again, and digging through the Content Browser
+for each one. Khaos Palette keeps them in one tab beside the viewport, sorted the way you work, one click from the
+level.
 
-Placing works exactly like dragging from the Content Browser, with surface snapping and multi-select, or turn on
-Click to Place: click a tile, then click in the level. Organise a palette into collapsible categories you can
-rename, give icons, reorder and fill by dropping assets onto them. Pin the tab in the sidebar and it fades out
-while you work in the viewport.
+**Click or drag to place.** Click a tile and the prop follows the cursor until you click in the level; Escape
+cancels. Or drag tiles in like Content Browser assets, with the same surface snapping, several at once with
+Ctrl-click.
 
-Palettes are plain data assets in your project, so they live in source control and the whole team shares them.
+**Sorted into categories.** Collapsible categories you name, reorder by dragging, give icons and choose which start
+open. Drop assets or tiles on a category to file them there.
 
-## Features
+**A palette per biome.** Every palette in the project sits in the tab's sidebar, each with its own name,
+description, icon and colour. Search the palette and resize the tiles to taste.
 
-- A dockable tab with every palette in the project in a sidebar, Place Actors style. Double-click a palette to open it.
-- Drag a tile into the viewport, with the same snapping and multi-select as a Content Browser drag.
-- Click to Place: click a tile and it follows the cursor until you click in a viewport. Escape cancels.
+**Out of your way.** Dock the tab anywhere, pin it to the editor's sidebar as a drawer, or float it. Turn on Fade
+When Not Hovered and it goes see-through while you work in the viewport.
+
+**Add from anywhere.** Drop assets on the tab, use Add to Palette on assets in the Content Browser or actors in the
+level, or make a new palette from a selection.
+
+**Shared as assets.** Palettes are plain data assets in your project: in source control, shared by the whole team,
+edited like any other asset.
+
+### Features
+
+- Dockable tab with every palette in the project in a sidebar.
+- Click to Place: click a tile, then click in any level viewport. Escape cancels.
+- Drag tiles into the viewport with Content Browser snapping; Ctrl-click to drag several.
 - Places Blueprint actors, static and skeletal meshes, Niagara systems, sounds and decal materials.
-- Collapsible categories: create, rename, reorder by dragging, set an icon, choose which start open, and drop assets or tiles onto them.
-- Search box and adjustable tile size.
-- Fill a palette by dropping assets on the tab, from the Content Browser's right-click menu, or from actors in the level. New Palette from Selection makes one in a click.
-- Fade When Not Hovered: pinned in the sidebar or floating, the panel turns see-through while the cursor is in the viewport.
-- Each palette has its own name, description, sidebar icon and colour.
+- Collapsible categories: create, rename, reorder, set icons, choose which start open.
+- Search, adjustable tile size, and tile names you can change without renaming the asset.
+- Fade When Not Hovered, with adjustable opacity, for a pinned drawer or a floating tab.
+- Add to Palette from the Content Browser and the level; New Palette from Selection.
+- Each palette has a name, description, sidebar icon and colour.
 - Unsaved palettes are marked, with a Save button in the tab.
-- Editor tooling only: the runtime module holds nothing but the palette data asset, so nothing else ships in your game.
+- Editor-only: the runtime module holds just the palette data asset, so nothing else ships in your game.
 
 ## Technical details
 
@@ -50,11 +60,13 @@ Palettes are plain data assets in your project, so they live in source control a
 - **Supported engine versions:** 5.8
 - **Documentation:** https://github.com/KhaosSystems/KhaosPalette/blob/main/Content/Docs/KhaosPalette.md
 - **Example project:** none
-- **Important notes:** Editor tool. Palettes are data assets in your project; create one with Content Browser > Add > Khaos > Khaos Palette and open the tab from Tools > Khaos Palette.
+- **Important notes:** Editor tool. Create a palette with Content Browser > Add > Khaos > Khaos Palette, then open
+  the tab with the Palette button on the level editor toolbar or from Tools > Khaos Palette.
 
 ## Version notes (1.0.0)
 
-First release: palettes of placeable assets in a dockable tab, with categories, search, drag-and-drop and click-to-place.
+First release: palettes of placeable assets in a dockable tab, with categories, search, Click to Place and
+drag-and-drop.
 
 ## Tags
 
