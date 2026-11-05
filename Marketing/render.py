@@ -43,7 +43,7 @@ SLIDES = [
     {"id": "02-drag", "layout": "close-up", "panel": "tab.png", "title": ("Drag", "it in"), "accent": RED},
     # target: the placed prop in scene.png, as page x, y and ring radius on the right half of the image.
     {"id": "03-click", "layout": "split", "panel": "tab.png", "title": ("Click.", "Place."), "accent": GREEN,
-     "target": (1290, 530, 190)},
+     "target": (1600, 520, 200)},
     {"id": "04-categories", "layout": "colour", "panel": "tab-menu.png", "title": ("Sort into", "categories"),
      "accent": ORANGE},
     {"id": "05-palettes", "layout": "large", "panel": "tab.png", "title": ("A palette", "per biome"), "accent": YELLOW},
@@ -123,7 +123,25 @@ SAVE = ('<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#C0C0C0" d=
         '0 0 1-2-2V5a2 2 0 0 1 1-2zm2 2v5h9V5zm5 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>')
 CURSOR = ('<svg width="44" height="56" viewBox="0 0 22 28"><path d="M1 1 L1 22 L7 17 L11 26 L15 24 L11 15 L19 15 Z" '
           'fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>')
-NAMES = ["Palm", "Fern", "Wheel", "Propeller", "Lamp", "Rocks", "Crates", "Hut", "Posts", "Leaf", "Fence", "Deck"]
+# For the mock tab's tiles until tab.png exists: props in scene.png as (name, centre x, centre y, crop size).
+PROPS = [
+    ("Palm_Tall", 1169, 532, 397), ("Fern_Bush", 1398, 553, 209), ("Ship_Wheel", 1670, 668, 177),
+    ("Palm_Small", 1550, 490, 190), ("Dress_Form", 657, 626, 219), ("Rock_Cluster", 630, 965, 220),
+    ("Crate_Stack", 1753, 605, 209), ("Stilt_Hut", 1450, 313, 250), ("Dock_Posts", 1790, 660, 240),
+    ("Leaf_Large", 230, 167, 344), ("Fence_Planks", 428, 710, 261), ("Pier_Deck", 1294, 814, 313),
+]
+
+
+def mock_tile(prop, px, selected=False):
+    """A tile of the mock tab: the prop cropped from scene.png, or plain grey without it."""
+    name, cx, cy, size = prop
+    scene = SHOTS / "scene.png"
+    style = ""
+    if scene.exists():
+        k = px / size
+        style = (f" style=\"background:#2A2A2A url('{scene.as_uri()}') no-repeat;background-size:{1920 * k:.1f}px auto;"
+                 f"background-position:{-(cx - size / 2) * k:.1f}px {-(cy - size / 2) * k:.1f}px\"")
+    return f'<div class="tile{" sel" if selected else ""}"><i{style}></i>{name}</div>'
 
 
 class Page:
@@ -174,7 +192,7 @@ class Page:
             tile = f'<img src="{path.as_uri()}" style="width:{px}px;border-radius:4px;box-shadow:0 0 0 4px {colour}">'
         else:
             self.draft = True
-            tile = f'<div class="tile"><i></i>Palm</div>'
+            tile = mock_tile(PROPS[0], px)
         self.add(f'<div class="ghost" style="left:{left}px;top:{top}px;width:{px}px;--c:{colour}">{tile}</div>',
                  f'<div style="position:absolute;left:{left + px * 0.7}px;top:{top + px * 0.75}px">{CURSOR}</div>')
 
@@ -192,7 +210,7 @@ class Page:
 def mock_tab(left, top, scale, menu=False):
     sidebar = "".join(f'<div class="{"on" if i == 0 else ""}"><img src="{svg_uri("PaletteSidebar", c)}"></div>'
                       for i, c in enumerate([ORANGE, BLUE, GREEN]))
-    tiles = [f'<div class="tile{" sel" if i == 0 else ""}"><i></i>{n}</div>' for i, n in enumerate(NAMES)]
+    tiles = [mock_tile(p, 110, i == 0) for i, p in enumerate(PROPS)]
     menu_html = ('<div class="menu"><div>Icon</div><div class="hi">Rename Category...</div>'
                  '<div class="check">Open by Default</div><hr><div>Remove Category</div></div>') if menu else ""
     return f"""<div class="tab" style="left:{left}px;top:{top}px;transform:scale({scale})">
