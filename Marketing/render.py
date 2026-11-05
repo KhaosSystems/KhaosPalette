@@ -30,9 +30,11 @@ BROWSER = next(p for p in [
 
 RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE = "#E5484D", "#F5A623", "#F2D94E", "#46B95F", "#3E8BFF", "#A05BEF"
 
-# Points on the tab as fractions of its screenshot (x, y). They match the mock; measure them again on tab.png.
-SEARCH, SIDEBAR, CATEGORY, TILE, FOLDED = (0.02, 0.085), (0.048, 0.213), (0.926, 0.149), (0.876, 0.25), (0.926, 0.778)
-TILE_ROW_EDGE = (0.978, 0.25)
+# Points on tab.png as fractions of its size (x, y): measure them again whenever tab.png is retaken.
+SEARCH, SIDEBAR, CATEGORY, TILE, FOLDED = (0.097, 0.134), (0.042, 0.281), (0.9, 0.189), (0.867, 0.289), (0.9, 0.864)
+TILE_ROW_EDGE = (0.947, 0.289)
+# Screenshots are enlarged at most this much, so UI text stays sharp.
+MAX_SCALE = 1.3
 
 SLIDES = [
     {"id": "00-cover", "layout": "cover", "panel": "tab.png"},
@@ -40,10 +42,10 @@ SLIDES = [
         ("Search", SEARCH, YELLOW, "left"), ("Every palette", SIDEBAR, BLUE, "left"),
         ("Categories", CATEGORY, GREEN, "right"), ("Drag or click", TILE, ORANGE, "right"),
         ("Fold away", FOLDED, PURPLE, "right")]},
-    {"id": "02-drag", "layout": "close-up", "panel": "tab.png", "title": ("Drag", "it in"), "accent": RED},
+    {"id": "02-drag", "layout": "close-up", "panel": "tab-large.png", "title": ("Drag", "it in"), "accent": RED},
     # target: where the tile is being placed in scene.png, as page x, y and ring radius (right half of the image).
     {"id": "03-click", "layout": "split", "panel": "tab.png", "title": ("Click.", "Place."), "accent": GREEN,
-     "target": (1460, 760, 150)},
+     "target": (1600, 750, 150)},
     {"id": "04-categories", "layout": "colour", "panel": "tab-menu.png", "title": ("Sort into", "categories"),
      "accent": ORANGE},
     {"id": "05-palettes", "layout": "large", "panel": "tab.png", "title": ("A palette", "per biome"), "accent": YELLOW},
@@ -178,6 +180,8 @@ class Page:
         path = SHOTS / name
         if path.exists():
             w, h = png_size(path)
+            if height > h * MAX_SCALE:
+                top, height = top + (height - h * MAX_SCALE) / 2, h * MAX_SCALE
             width = height * w / h
             if max_width and width > max_width:
                 top, height, width = top + (height - max_width * h / w) / 2, max_width * h / w, max_width
@@ -279,7 +283,7 @@ def callouts(page, slide):
 
 def close_up(page, slide):
     page.scene()
-    page.panel(slide["panel"], 1010, 150, 1640)
+    page.panel(slide["panel"], 1010, 150, 1640 if not (SHOTS / slide["panel"]).exists() else 1170)
     page.ghost(560, 520, 190, slide["accent"])
     page.add('<svg style="position:absolute;left:0;top:0" width="1920" height="1080"><path d="M1180 470 C 1000 420, '
              '880 470, 780 560" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="14 12"/></svg>')

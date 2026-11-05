@@ -1,0 +1,65 @@
+{
+  "folder": "/Game/Marketing_Temp",
+  "camera": {"location": [300, 1000, -550], "rotation": [-18, -90]},
+  "tile": "/Game/Props/Dockyard/Dock_PIRATEDEN/SM_BarrelBoat",
+  "palettes": {
+    "Palette_Dock": {
+      "displayName": "Dock",
+      "description": "Props for dressing the docks and the beach.",
+      "color": [1.0, 0.55, 0.16],
+      "categories": [["Dock", false], ["Island", false], ["Treasure", true]],
+      "entries": [
+        ["Dock", "/Game/Props/Dockyard/Dock_PIRATEDEN/SM_BarrelBoat", "Barrel Boat"],
+        ["Dock", "/Game/Props/Dockyard/Dock_PIRATEDEN/SM_WoodenOar", "Oar"],
+        ["Dock", "/Game/Props/Dockyard/SM_Bobber1", "Bobber"],
+        ["Dock", "/Game/Props/Bar/SM_Rope_Knot", "Rope Knot"],
+        ["Dock", "/Game/Props/Dockyard/SM_Chainlink2", "Chain Link"],
+        ["Dock", "/Game/Props/Bar/SM_PlankBridge_Straight", "Plank Bridge"],
+        ["Dock", "/Game/Props/Common/SM_Pirate_Canon", "Cannon"],
+        ["Dock", "/Game/Props/Common/SM_Bucket", "Bucket"],
+        ["Island", "/Game/Props/Common/PalmTrees/SM_PalmTree_01", "Palm Tree"],
+        ["Island", "/Game/Props/Common/PalmTrees/SM_PalmTree_02", "Leaning Palm"],
+        ["Island", "/Game/Props/Common/PalmTrees/SM_PalmTreeShort_01", "Short Palm"],
+        ["Island", "/Game/Props/Common/SM_coconut", "Coconut"],
+        ["Treasure", "/Game/Props/Dockyard/Dock_PIRATEDEN/SM_PirateSkull", "Skull"],
+        ["Treasure", "/Game/Props/Dockyard/SM_Bottle1", "Bottle"],
+        ["Treasure", "/Game/Props/Common/SM_Cutlass", "Cutlass"],
+        ["Treasure", "/Game/Props/Shallows/SM_PearlClam_Bottom", "Pearl Clam"],
+        ["Treasure", "/Game/Props/Shallows/SM_ShellSpiral", "Spiral Shell"]
+      ]
+    },
+    "Palette_Shallows": {
+      "displayName": "Shallows",
+      "description": "Coral, kelp and rocks for the shallows.",
+      "color": [0.24, 0.55, 1.0],
+      "categories": [["Coral", false], ["Kelp", false], ["Rocks", false]],
+      "entries": [
+        ["Coral", "/Game/Props/Shallows/SM_Coralnub_01", "Coral Nub"],
+        ["Coral", "/Game/Props/Shallows/SM_Coralnub_02", "Coral Cluster"],
+        ["Coral", "/Game/Props/Shallows/SM_PurpleLeaf_01", "Purple Leaf"],
+        ["Coral", "/Game/Props/Shallows/SM_Sharpleaf_01", "Sharp Leaf"],
+        ["Kelp", "/Game/Props/Shallows/SM_Kelp_01", "Kelp"],
+        ["Kelp", "/Game/Props/Shallows/SM_Kelp_02", "Tall Kelp"],
+        ["Rocks", "/Game/Props/Shallows/SM_FingerRock_01", "Finger Rock"],
+        ["Rocks", "/Game/Props/Shallows/SM_RockSpiral", "Spiral Rock"],
+        ["Rocks", "/Game/Props/Shallows/SM_Shipwreck_01", "Shipwreck"]
+      ]
+    },
+    "Palette_BasinCaves": {
+      "displayName": "Basin Caves",
+      "description": "Crystals, mushrooms and rock for the basin caves.",
+      "color": [0.27, 0.73, 0.37],
+      "categories": [["Crystals", false], ["Fungi", false], ["Rock", false]],
+      "entries": [
+        ["Crystals", "/Game/Props/Basin/Caves/SM_CrystalCluster", "Crystal Cluster"],
+        ["Crystals", "/Game/Props/Basin/Caves/SM_CrystalLarge", "Large Crystal"],
+        ["Fungi", "/Game/Props/Basin/Caves/SM_Mushroom_Bulb", "Bulb Mushroom"],
+        ["Fungi", "/Game/Props/Basin/Caves/SM_Mushroom_MoonStack", "Moon Stack"],
+        ["Fungi", "/Game/Props/Basin/Caves/SM_MyconidTree", "Myconid Tree"],
+        ["Fungi", "/Game/Props/Basin/Caves/SM_Lilypad1", "Lilypad"],
+        ["Rock", "/Game/Props/Basin/Caves/SM_Rock_RockPillar", "Rock Pillar"],
+        ["Rock", "/Game/Props/Basin/Caves/SM_StalagtiteLarge", "Stalactite"]
+      ]
+    }
+  }
+}
