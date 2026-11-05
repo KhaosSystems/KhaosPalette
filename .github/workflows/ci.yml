@@ -6,7 +6,9 @@ on:
   push:
     branches: [main]
     tags: ['v*']
+    paths-ignore: ['Marketing/**'] # Not part of the plugin; tags build regardless.
   pull_request:
+    paths-ignore: ['Marketing/**']
   workflow_dispatch:
     inputs:
       release:
