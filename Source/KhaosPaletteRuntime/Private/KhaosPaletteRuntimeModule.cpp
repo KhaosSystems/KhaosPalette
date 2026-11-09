@@ -1,4 +1,4 @@
-// Copyright Khaos Systems. All Rights Reserved.
+// Copyright 2026 Khaos Systems. All Rights Reserved.
 
 #include "KhaosPaletteRuntimeModule.h"
 
