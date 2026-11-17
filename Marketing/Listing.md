@@ -45,7 +45,7 @@ Create a palette with Content Browser > Add > Khaos > Khaos Palette, then press 
 - **Supported development platforms:** Windows
 - **Supported target build platforms:** Windows, Mac, Linux, Android, iOS
 - **Supported engine versions:** 5.8
-- **Documentation:** https://github.com/KhaosSystems/KhaosPalette/blob/main/Content/Docs/KhaosPalette.md
+- **Documentation:** https://docs.khaos.systems/unreal/khaos-palette/
 - **Important notes:** Create a palette with Content Browser > Add > Khaos > Khaos Palette. Open it with the Palette button on the toolbar.
 
 ## Version notes (1.0.0)

@@ -20,8 +20,8 @@ editor-only.
 
 ## Docs
 
-[Khaos Palette](Content/Docs/KhaosPalette.md), which also opens in the editor through
-[KhaosDocs](https://github.com/KhaosSystems/KhaosDocs).
+[Khaos Palette](Docs/KhaosPalette.md), which also opens in the editor's documentation window
+through [KhaosDocs](https://github.com/KhaosSystems/KhaosDocs).
 
 ## Development
 
