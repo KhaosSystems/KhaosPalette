@@ -29,5 +29,7 @@ jobs:
     with:
       engine-versions: '["5.8"]'
       release: ${{ inputs.release == true }}
+      publish-docs: true
     secrets:
       discord-webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      docs-token: ${{ secrets.KHAOS_DOCS_TOKEN }}
