@@ -30,12 +30,14 @@ TConstArrayView<FAssetCategoryPath> UAssetDefinition_KhaosPalette::GetAssetCateg
 
 EAssetCommandResult UAssetDefinition_KhaosPalette::OpenAssets(const FAssetOpenArgs& OpenArgs) const
 {
-	for (UKhaosPalette* Palette : OpenArgs.LoadObjects<UKhaosPalette>())
+	// The palette tab shows one palette, so open the first one selected.
+	const TArray<UKhaosPalette*> Palettes = OpenArgs.LoadObjects<UKhaosPalette>();
+	if (Palettes.IsEmpty())
 	{
-		FKhaosPaletteEditorModule::OpenPaletteTab(Palette);
-		return EAssetCommandResult::Handled;
+		return EAssetCommandResult::Unhandled;
 	}
-	return EAssetCommandResult::Unhandled;
+	FKhaosPaletteEditorModule::OpenPaletteTab(Palettes[0]);
+	return EAssetCommandResult::Handled;
 }
 
 #undef LOCTEXT_NAMESPACE
