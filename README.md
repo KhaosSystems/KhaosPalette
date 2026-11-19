@@ -5,6 +5,8 @@
 ![Unreal Engine](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/KhaosSystems/KhaosPalette/badges/unreal.json)
 ![Lines of code](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/KhaosSystems/KhaosPalette/badges/loc.json)
 [![Release](https://img.shields.io/github/v/release/KhaosSystems/KhaosPalette)](https://github.com/KhaosSystems/KhaosPalette/releases)
+[![Windows](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/KhaosSystems/KhaosPalette/badges/windows.json)](https://github.com/KhaosSystems/KhaosPalette/actions/workflows/ci.yml)
+[![macOS](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/KhaosSystems/KhaosPalette/badges/macos.json)](https://github.com/KhaosSystems/KhaosPalette/actions/workflows/ci.yml)
 
 Artist-authored palettes of placeable assets (blueprints, meshes, Niagara systems, sounds,
 decals) in a dockable tab, for drag-and-drop set dressing.
