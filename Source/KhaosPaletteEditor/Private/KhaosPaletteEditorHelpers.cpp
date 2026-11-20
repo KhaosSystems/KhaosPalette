@@ -3,14 +3,18 @@
 #include "KhaosPaletteEditorHelpers.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Framework/Application/SlateApplication.h"
 #include "GameFramework/Actor.h"
 #include "IAssetTools.h"
 #include "KhaosPalette.h"
 #include "KhaosPaletteEditorModule.h"
 #include "KhaosPaletteFactory.h"
 #include "KhaosPaletteStyle.h"
+#include "ScopedTransaction.h"
 #include "Styling/AppStyle.h"
 #include "ToolMenus.h"
+#include "Widgets/Input/SEditableTextBox.h"
+#include "Widgets/Layout/SBox.h"
 
 #define LOCTEXT_NAMESPACE "KhaosPaletteEditor"
 
@@ -47,15 +51,79 @@ namespace KhaosPaletteEditor
 		return Paths;
 	}
 
-	static void AddToPalette(const FAssetData PaletteAsset, const TArray<FSoftObjectPath> Assets)
+	// With no category, adds the new assets uncategorised and leaves ones already in the palette alone. With one
+	// (NAME_None for Uncategorised), new assets go into it and ones already there move to it, so what was picked
+	// is where they all end up.
+	static void AddToPalette(const FAssetData PaletteAsset, const TArray<FSoftObjectPath> Assets, const TOptional<FName> Category)
 	{
 		UKhaosPalette* Palette = Cast<UKhaosPalette>(PaletteAsset.GetAsset());
 		if (!Palette)
 		{
 			return;
 		}
-		Palette->AddAssets(Assets);
+		const FScopedTransaction Transaction(LOCTEXT("AddToPaletteTransaction", "Add to Palette"));
+		if (Category.IsSet())
+		{
+			Palette->AddCategory(Category.GetValue());
+			Palette->AddAssets(Assets, Category.GetValue());
+			Palette->SetCategory(Assets, Category.GetValue());
+		}
+		else
+		{
+			Palette->AddAssets(Assets);
+		}
 		FKhaosPaletteEditorModule::OpenPaletteTab(Palette);
+	}
+
+	// The categories of one palette, loaded only when its submenu opens.
+	static void BuildPaletteCategoryMenu(UToolMenu* Menu, const FAssetData PaletteAsset, const TArray<FSoftObjectPath> Assets)
+	{
+		const UKhaosPalette* Palette = Cast<UKhaosPalette>(PaletteAsset.GetAsset());
+		if (!Palette)
+		{
+			return;
+		}
+		FToolMenuSection& Section = Menu->AddSection("KhaosPaletteCategories", LOCTEXT("CategoriesSection", "Category"));
+		for (const FName& Category : Palette->GetCategoryOrder())
+		{
+			Section.AddMenuEntry(
+				Category,
+				FText::FromName(Category),
+				FText::Format(LOCTEXT("AddToCategoryTooltip", "Add to {0}. Assets already in the palette move there."), FText::FromName(Category)),
+				FSlateIcon(),
+				FUIAction(FExecuteAction::CreateStatic(&AddToPalette, PaletteAsset, Assets, TOptional<FName>(Category))));
+		}
+		Section.AddMenuEntry(
+			"Uncategorised",
+			LOCTEXT("Uncategorised", "Uncategorised"),
+			LOCTEXT("AddUncategorisedTooltip", "Add without a category. Assets already in the palette move out of theirs."),
+			FSlateIcon(),
+			FUIAction(FExecuteAction::CreateStatic(&AddToPalette, PaletteAsset, Assets, TOptional<FName>(NAME_None))));
+
+		// Typed in place: Enter creates the category and adds the assets to it.
+		Section.AddSeparator("NewCategorySeparator");
+		Section.AddEntry(FToolMenuEntry::InitWidget(
+			"NewCategory",
+			SNew(SBox)
+			.WidthOverride(180.f)
+			.Padding(FMargin(2.f, 2.f))
+			[
+				SNew(SEditableTextBox)
+				.HintText(LOCTEXT("NewCategoryHint", "New category..."))
+				.ToolTipText(LOCTEXT("NewCategoryTooltip", "Type a name and press Enter to add the assets to a new category."))
+				.OnTextCommitted_Lambda([PaletteAsset, Assets](const FText& Text, ETextCommit::Type CommitType)
+				{
+					const FString Name = Text.ToString().TrimStartAndEnd();
+					if (CommitType != ETextCommit::OnEnter || Name.IsEmpty())
+					{
+						return;
+					}
+					AddToPalette(PaletteAsset, Assets, TOptional<FName>(FName(*Name)));
+					FSlateApplication::Get().DismissAllMenus();
+				})
+			],
+			FText::GetEmpty(),
+			/*bNoIndent*/ true));
 	}
 
 	void CreatePalette(TArray<FSoftObjectPath> InitialAssets)
@@ -77,12 +145,16 @@ namespace KhaosPaletteEditor
 			{
 				Label = FText::FromName(PaletteAsset.AssetName);
 			}
-			Section.AddMenuEntry(
+			// Click adds without a category; the submenu picks one.
+			Section.AddSubMenu(
 				PaletteAsset.PackageName,
 				Label,
-				FText::FromString(PaletteAsset.GetObjectPathString()),
-				PaletteIcon,
-				FUIAction(FExecuteAction::CreateStatic(&AddToPalette, PaletteAsset, Assets)));
+				FText::Format(LOCTEXT("AddToPaletteEntryTooltip", "{0}\nClick to add here, or pick a category."), FText::FromString(PaletteAsset.GetObjectPathString())),
+				FNewToolMenuDelegate::CreateStatic(&BuildPaletteCategoryMenu, PaletteAsset, Assets),
+				FToolUIActionChoice(FUIAction(FExecuteAction::CreateStatic(&AddToPalette, PaletteAsset, Assets, TOptional<FName>()))),
+				EUserInterfaceActionType::Button,
+				/*bInOpenSubMenuOnClick*/ false,
+				PaletteIcon);
 		}
 
 		Section.AddSeparator("NewPaletteSeparator");

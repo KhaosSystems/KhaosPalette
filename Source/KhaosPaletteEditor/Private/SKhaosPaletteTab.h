@@ -10,6 +10,7 @@
 class FAssetThumbnail;
 class FAssetThumbnailPool;
 class FActiveTimerHandle;
+class FDragDropOperation;
 class FMenuBuilder;
 class SBox;
 class SWindow;
@@ -43,6 +44,7 @@ public:
 
 	virtual bool SupportsKeyboardFocus() const override { return true; }
 	virtual FReply OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent) override;
+	virtual FReply OnPreviewMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 
 private:
@@ -82,13 +84,19 @@ private:
 	TSharedRef<SWidget> MakeCategorySection(FName Category, const TArray<FItemPtr>& Items);
 	FString SectionKey(FName Category) const;
 	TSharedRef<SWidget> MakeTileWrap(const TArray<FItemPtr>& Items);
-	TSharedRef<SWidget> MakeTile(FItemPtr Item);
+	TSharedRef<SWidget> MakeTile(FItemPtr Item, const TAttribute<float>& CellSize);
 	TSharedRef<SWidget> MakeTileContextMenu();
 	FReply OnTileClicked(FItemPtr Item, const FPointerEvent& MouseEvent);
 	FReply OnTileReleased(FItemPtr Item, const FPointerEvent& MouseEvent);
 	FReply OnTileDoubleClicked(FItemPtr Item, const FPointerEvent& MouseEvent);
 	FReply OnTileContextMenu(FItemPtr Item, const FPointerEvent& MouseEvent);
 	FReply OnTileDragRequested(FItemPtr Item, const FPointerEvent& MouseEvent);
+	// A drag this tab started from a selected tile stands for the whole selection when dropped on a category.
+	TArray<FAssetData> WithSelection(TArrayView<FAssetData> Assets, const TSharedPtr<FDragDropOperation>& Operation) const;
+	bool IsSectionCollapsed(FName Category) const;
+	TArray<FItemPtr> GetSelectableItems() const; // DisplayedItems outside collapsed sections
+	void SelectRange(FItemPtr From, FItemPtr To, bool bAddToSelection);
+	float GetCellSize(float AvailableWidth) const; // tile size that fills a row of the given width
 	EVisibility GetEmptyHintVisibility() const;
 	FText GetEmptyHintText() const;
 
@@ -128,7 +136,12 @@ private:
 	FName PaletteIconName;
 	TArray<FItemPtr> AllItems;
 	TArray<FItemPtr> FilteredItems;
+	// FilteredItems in the order the grid shows them, with the category each section shows them under; for
+	// Shift-click ranges and Ctrl+A, which skip collapsed sections like the Content Browser skips closed folders.
+	TArray<FItemPtr> DisplayedItems;
 	TSet<FItemPtr> SelectedItems;
+	FItemPtr SelectionAnchor; // the last plain or Ctrl click, where a Shift-click range starts
+	TWeakPtr<FDragDropOperation> TileDrag; // the last drag started from a tile
 	TArray<FName> Categories; // display order, from the palette
 	// "<palette path>|<category>" -> collapsed, for sections the user toggled this session; grid rebuilds keep
 	// that state. Sections without an entry follow the category's bCollapsedByDefault.

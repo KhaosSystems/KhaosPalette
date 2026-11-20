@@ -28,6 +28,9 @@ void SKhaosPaletteTile::Construct(const FArguments& InArgs)
 		? Item->Thumbnail->MakeThumbnailWidget(ThumbnailConfig)
 		: StaticCastSharedRef<SWidget>(SNew(SBorder).BorderImage(FAppStyle::GetBrush("AssetThumbnail.ClassBackground")));
 
+	const TAttribute<float> TileSize = InArgs._TileSize;
+	const TAttribute<FOptionalSize> Size = TAttribute<FOptionalSize>::CreateLambda([TileSize]() { return FOptionalSize(TileSize.Get()); });
+
 	SetCursor(EMouseCursor::GrabHand);
 	SetToolTipText(FText::FromString(Item->AssetData.GetObjectPathString()));
 
@@ -44,8 +47,8 @@ void SKhaosPaletteTile::Construct(const FArguments& InArgs)
 			.HAlign(HAlign_Center)
 			[
 				SNew(SBox)
-				.WidthOverride(InArgs._TileSize)
-				.HeightOverride(InArgs._TileSize)
+				.WidthOverride(Size)
+				.HeightOverride(Size)
 				[
 					ThumbnailWidget
 				]
@@ -57,7 +60,7 @@ void SKhaosPaletteTile::Construct(const FArguments& InArgs)
 			.Padding(0.f, 3.f, 0.f, 0.f)
 			[
 				SNew(SBox)
-				.WidthOverride(InArgs._TileSize)
+				.WidthOverride(Size)
 				[
 					SNew(STextBlock)
 					.Text(Item->Label)
