@@ -15,6 +15,7 @@ void SKhaosPaletteTile::Construct(const FArguments& InArgs)
 {
 	Item = InArgs._Item;
 	IsSelected = InArgs._IsSelected;
+	IsPlacing = InArgs._IsPlacing;
 	OnClickedDelegate = InArgs._OnClicked;
 	OnReleasedDelegate = InArgs._OnReleased;
 	OnDoubleClickedDelegate = InArgs._OnDoubleClicked;
@@ -121,6 +122,10 @@ FReply SKhaosPaletteTile::OnDragDetected(const FGeometry& MyGeometry, const FPoi
 
 const FSlateBrush* SKhaosPaletteTile::GetBackground() const
 {
+	if (IsPlacing.Get(false))
+	{
+		return FAppStyle::GetBrush("Brushes.AccentOrange");
+	}
 	if (IsSelected.Get(false))
 	{
 		return FAppStyle::GetBrush("Brushes.Select");

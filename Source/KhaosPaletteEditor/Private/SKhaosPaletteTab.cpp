@@ -19,6 +19,7 @@
 #include "IContentBrowserSingleton.h"
 #include "KhaosPalette.h"
 #include "KhaosPaletteEditorHelpers.h"
+#include "KhaosPalettePlacement.h"
 #include "KhaosPaletteStyle.h"
 #include "Layout/WidgetPath.h"
 #include "Misc/ConfigCacheIni.h"
@@ -62,6 +63,8 @@ namespace
 	const TCHAR* ConfigLastPaletteKey = TEXT("LastPalette");
 	const TCHAR* ConfigGroupByCategoryKey = TEXT("GroupByCategory");
 	const TCHAR* ConfigClickToPlaceKey = TEXT("ClickToPlace");
+	const TCHAR* ConfigRandomFromSelectionKey = TEXT("RandomFromSelection");
+	const TCHAR* ConfigKeepPlacingKey = TEXT("KeepPlacing");
 	const TCHAR* ConfigFadeWhenNotHoveredKey = TEXT("FadeWhenNotHovered");
 	const TCHAR* ConfigFadedOpacityKey = TEXT("FadedOpacity");
 	// Matches the Place Actors category sidebar (FCategoryDrivenContentBuilderBase, unlabelled).
@@ -128,6 +131,8 @@ void SKhaosPaletteTab::Construct(const FArguments& InArgs)
 	ThumbnailPool = UThumbnailManager::Get().GetSharedThumbnailPool();
 	GConfig->GetBool(ConfigSection, ConfigGroupByCategoryKey, bGroupByCategory, GEditorPerProjectIni);
 	GConfig->GetBool(ConfigSection, ConfigClickToPlaceKey, bClickToPlace, GEditorPerProjectIni);
+	GConfig->GetBool(ConfigSection, ConfigRandomFromSelectionKey, bRandomFromSelection, GEditorPerProjectIni);
+	GConfig->GetBool(ConfigSection, ConfigKeepPlacingKey, bKeepPlacing, GEditorPerProjectIni);
 	GConfig->GetBool(ConfigSection, ConfigFadeWhenNotHoveredKey, bFadeWhenNotHovered, GEditorPerProjectIni);
 	GConfig->GetFloat(ConfigSection, ConfigFadedOpacityKey, FadedOpacity, GEditorPerProjectIni);
 
@@ -161,7 +166,6 @@ void SKhaosPaletteTab::Construct(const FArguments& InArgs)
 			[
 				MakeHeader()
 			]
-
 			// Grid; the whole area is a drop target for assets dragged from the Content Browser. When grouped, the
 			// sections give the feedback, so this one stays silent (a panel-wide tint would mark all of them).
 			+ SVerticalBox::Slot()
@@ -229,6 +233,10 @@ void SKhaosPaletteTab::Construct(const FArguments& InArgs)
 
 SKhaosPaletteTab::~SKhaosPaletteTab()
 {
+	if (Placement.IsValid())
+	{
+		Placement->End();
+	}
 	RestoreFaded();
 	FCoreUObjectDelegates::OnObjectPropertyChanged.Remove(PropertyChangedHandle);
 	FCoreUObjectDelegates::OnObjectTransacted.Remove(TransactedHandle);
@@ -651,7 +659,7 @@ TSharedRef<SWidget> SKhaosPaletteTab::MakeSettingsMenu()
 	MenuBuilder.BeginSection("Placement", LOCTEXT("PlacementSection", "Placement"));
 	MenuBuilder.AddMenuEntry(
 		LOCTEXT("ClickToPlace", "Click to Place"),
-		LOCTEXT("ClickToPlaceTooltip", "Clicking a tile picks it up: it follows the cursor until the next click in a viewport places it. Escape cancels. Dragging still works."),
+		LOCTEXT("ClickToPlaceTooltip", "Clicking a tile picks it up: the next click in a viewport places it, and Shift-click places it and keeps going. Escape or a click anywhere else stops. Tab and Shift-Tab switch between the selected tiles, or the tiles of the category. Dragging still works."),
 		FSlateIcon(),
 		FUIAction(
 			FExecuteAction::CreateLambda([this]()
@@ -661,6 +669,34 @@ TSharedRef<SWidget> SKhaosPaletteTab::MakeSettingsMenu()
 			}),
 			FCanExecuteAction(),
 			FIsActionChecked::CreateLambda([this]() { return bClickToPlace; })),
+		NAME_None,
+		EUserInterfaceActionType::ToggleButton);
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("KeepPlacing", "Keep Placing"),
+		LOCTEXT("KeepPlacingTooltip", "After a click places a tile, stay in placement for the next click, until Escape or a click anywhere else. Off, hold Shift while clicking to keep going."),
+		FSlateIcon(),
+		FUIAction(
+			FExecuteAction::CreateLambda([this]()
+			{
+				bKeepPlacing = !bKeepPlacing;
+				GConfig->SetBool(ConfigSection, ConfigKeepPlacingKey, bKeepPlacing, GEditorPerProjectIni);
+			}),
+			FCanExecuteAction::CreateLambda([this]() { return bClickToPlace; }),
+			FIsActionChecked::CreateLambda([this]() { return bKeepPlacing; })),
+		NAME_None,
+		EUserInterfaceActionType::ToggleButton);
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("RandomFromSelection", "Random from Selection"),
+		LOCTEXT("RandomFromSelectionTooltip", "When placing from a multi-selection, switch to a random other selected tile after each placement."),
+		FSlateIcon(),
+		FUIAction(
+			FExecuteAction::CreateLambda([this]()
+			{
+				bRandomFromSelection = !bRandomFromSelection;
+				GConfig->SetBool(ConfigSection, ConfigRandomFromSelectionKey, bRandomFromSelection, GEditorPerProjectIni);
+			}),
+			FCanExecuteAction::CreateLambda([this]() { return bClickToPlace; }),
+			FIsActionChecked::CreateLambda([this]() { return bRandomFromSelection; })),
 		NAME_None,
 		EUserInterfaceActionType::ToggleButton);
 	MenuBuilder.EndSection();
@@ -1062,6 +1098,7 @@ TSharedRef<SWidget> SKhaosPaletteTab::MakeTile(FItemPtr Item, const TAttribute<f
 		.Item(Item)
 		.TileSize(CellSize)
 		.IsSelected_Lambda([this, Item]() { return SelectedItems.Contains(Item); })
+		.IsPlacing_Lambda([this, Item]() { return !PlacingAsset.IsNull() && Item->AssetData.GetSoftObjectPath() == PlacingAsset; })
 		.OnClicked(FOnKhaosPaletteTileEvent::CreateSP(this, &SKhaosPaletteTab::OnTileClicked))
 		.OnReleased(FOnKhaosPaletteTileEvent::CreateSP(this, &SKhaosPaletteTab::OnTileReleased))
 		.OnDoubleClicked(FOnKhaosPaletteTileEvent::CreateSP(this, &SKhaosPaletteTab::OnTileDoubleClicked))
@@ -1216,7 +1253,35 @@ FReply SKhaosPaletteTab::OnTileReleased(FItemPtr Item, const FPointerEvent& Mous
 		SelectedItems.Add(Item);
 		return FReply::Unhandled();
 	}
-	return OnTileDragRequested(Item, MouseEvent);
+	// Our own placement, whose preview snaps like the final actor and which keeps placing until Escape. Clicked
+	// out of a multi-selection, the wheel switches between the selected tiles, in grid order. Assets no actor
+	// factory can place fall back to picking up a drag, as before.
+	// What the wheel switches between: the selection when the tile is part of one, otherwise the tiles of its
+	// category (all of them when not grouping), in the order the grid shows them.
+	FKhaosPalettePlacementArgs Args;
+	const bool bFromSelection = SelectedItems.Contains(Item) && SelectedItems.Num() > 1;
+	for (const FItemPtr& Displayed : DisplayedItems)
+	{
+		const bool bCandidate = bFromSelection
+			? SelectedItems.Contains(Displayed)
+			: (!bGroupByCategory || Displayed->Category == Item->Category);
+		if (bCandidate && Displayed->Thumbnail.IsValid())
+		{
+			if (Displayed == Item)
+			{
+				Args.StartIndex = Args.Assets.Num();
+			}
+			Args.Assets.Add(Displayed->AssetData);
+		}
+	}
+	if (Args.Assets.IsEmpty() && Item->Thumbnail.IsValid())
+	{
+		Args.Assets.Add(Item->AssetData);
+	}
+	Args.bRandomAfterPlace = bRandomFromSelection;
+	Args.bKeepPlacing = bKeepPlacing;
+	StartPlacement(MoveTemp(Args), /*bHighlight*/ true);
+	return Placement.IsValid() ? FReply::Handled() : OnTileDragRequested(Item, MouseEvent);
 }
 
 // Always the one tile under the cursor, never the selection: the viewport would drop every asset of a
@@ -1229,7 +1294,41 @@ FReply SKhaosPaletteTab::OnTileDragRequested(FItemPtr Item, const FPointerEvent&
 	}
 	const TSharedRef<FAssetDragDropOp> Operation = FAssetDragDropOp::New(Item->AssetData);
 	TileDrag = Operation;
+	// Over the palette this stays Unreal's drag, so it drops onto category sections. If it reaches a level
+	// viewport, our placement takes it over there, so the preview snaps like a click placement.
+	FKhaosPalettePlacementArgs Args;
+	Args.Assets.Add(Item->AssetData);
+	Args.FromDrag = Operation;
+	// No highlight: most drags that stay in the palette are organising, not placing.
+	StartPlacement(MoveTemp(Args), /*bHighlight*/ false);
 	return FReply::Handled().BeginDragDrop(Operation);
+}
+
+void SKhaosPaletteTab::StartPlacement(FKhaosPalettePlacementArgs&& Args, bool bHighlight)
+{
+	if (Placement.IsValid())
+	{
+		Placement->End();
+	}
+	const TWeakPtr<SKhaosPaletteTab> WeakThis = StaticCastSharedRef<SKhaosPaletteTab>(AsShared());
+	if (bHighlight)
+	{
+		Args.OnAssetChanged = [WeakThis](const FAssetData& AssetData)
+		{
+			if (const TSharedPtr<SKhaosPaletteTab> Tab = WeakThis.Pin())
+			{
+				Tab->PlacingAsset = AssetData.GetSoftObjectPath();
+			}
+		};
+	}
+	Args.OnEnded = [WeakThis]()
+	{
+		if (const TSharedPtr<SKhaosPaletteTab> Tab = WeakThis.Pin())
+		{
+			Tab->PlacingAsset.Reset();
+		}
+	};
+	Placement = FKhaosPalettePlacement::Begin(MoveTemp(Args));
 }
 
 TArray<FAssetData> SKhaosPaletteTab::WithSelection(TArrayView<FAssetData> Assets, const TSharedPtr<FDragDropOperation>& Operation) const

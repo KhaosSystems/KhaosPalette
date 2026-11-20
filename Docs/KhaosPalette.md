@@ -9,9 +9,16 @@ Niagara systems, sounds, decal materials...). Typical use: one palette per biome
 - **Open the tab**: Tools > Khaos Palette, or double-click a palette asset. The sidebar lists every palette in the
   project, Place Actors style; the `+` under the last one creates a new palette.
 - **Place things**: drag a tile into the level viewport. Tiles start a normal asset drag, so the viewport places
-  them exactly as a Content Browser drag would (surface snapping, multi-select, etc.). With **Click to Place** on
-  (gear menu in the header, on by default) a plain click picks the tile up instead: the asset follows the cursor
-  until the next click in a viewport places it, and Escape cancels.
+  them exactly as a Content Browser drag would. With **Click to Place** on (gear menu in the header, on by
+  default) a plain click picks the tile up instead: the next click in a viewport places it, Shift-click places it
+  and keeps going (or turn on **Keep Placing** in the gear menu), and Escape or a click anywhere else stops. The
+  preview hides while you move the camera, and where nothing is under the cursor it sits on the ground plane.
+  Tab and Shift-Tab switch to the next and previous tile: the selected ones when the tile was clicked
+  out of a multi-selection, otherwise the tiles of its category. **Random from Selection** (gear menu) switches to a random one after each placement. Shift-scroll
+  rotates (by the rotation snap step when rotation snapping is on, else 15 degrees) and Ctrl-scroll scales (by the
+  scale snap step, else 10%); both carry over to the next placement. The tile being placed is highlighted, a label
+  beside the cursor shows what is being placed, and a bar at the bottom of the viewport lists these keys. Either way the preview snaps as the actor will: grid
+  snapping, and surface snapping and alignment, from the viewport toolbar.
 - **Select several**: as in the Content Browser. Ctrl-click adds or removes a tile, Shift-click selects everything
   from the last clicked tile to this one (Ctrl+Shift adds that range), Ctrl+A selects all. Ranges and Ctrl+A skip
   collapsed sections. Modifier clicks never pick a tile up, so this works with Click to Place on. Delete, the
