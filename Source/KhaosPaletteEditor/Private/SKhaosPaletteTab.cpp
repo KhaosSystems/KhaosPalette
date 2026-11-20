@@ -3,6 +3,7 @@
 #include "SKhaosPaletteTab.h"
 
 #include "Algo/AllOf.h"
+#include "Algo/AnyOf.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetThumbnail.h"
 #include "ContentBrowserModule.h"
@@ -24,7 +25,6 @@
 #include "Modules/ModuleManager.h"
 #include "PropertyCustomizationHelpers.h"
 #include "PropertyEditorModule.h"
-#include "SAssetDropTarget.h"
 #include "SDropTarget.h"
 #include "SKhaosPaletteCategoryHeader.h"
 #include "SKhaosPaletteTile.h"
@@ -176,7 +176,8 @@ void SKhaosPaletteTab::Construct(const FArguments& InArgs)
 					.VerticalImage(FStyleDefaults::GetNoBrush())
 					.HorizontalImage(FStyleDefaults::GetNoBrush())
 					.BackgroundImage_Lambda([this]() { return bGroupByCategory ? FStyleDefaults::GetNoBrush() : FAppStyle::GetBrush("DropTarget.Background"); })
-					.OnIsRecognized_Lambda([](TSharedPtr<FDragDropOperation> Op) { return Op.IsValid() && Op->IsOfType<FAssetDragDropOp>(); })
+					// Only drags that would add something, so picking up one of its own tiles shows nothing.
+					.OnIsRecognized_Lambda([this](TSharedPtr<FDragDropOperation> Op) { return AreAssetsAcceptableForDrop(DraggedAssets(Op)); })
 					.OnAllowDrop_Lambda([this](TSharedPtr<FDragDropOperation> Op) { return AreAssetsAcceptableForDrop(DraggedAssets(Op)); })
 					.OnDropped_Lambda([this](const FGeometry&, const FDragDropEvent& Event)
 					{
@@ -261,7 +262,26 @@ FReply SKhaosPaletteTab::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent&
 		RenameSelected();
 		return FReply::Handled();
 	}
+	if (InKeyEvent.GetKey() == EKeys::A && InKeyEvent.IsControlDown())
+	{
+		SelectedItems = TSet<FItemPtr>(GetSelectableItems());
+		return FReply::Handled();
+	}
 	return SCompoundWidget::OnKeyDown(MyGeometry, InKeyEvent);
+}
+
+FReply SKhaosPaletteTab::OnPreviewMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	// A tile picked up by click to place follows the cursor until the next click. A click back inside the palette
+	// is meant for the palette (Shift-click a range, pick another tile), so drop the pick-up and let the click
+	// through, rather than spending it on ending the drag.
+	const TSharedPtr<FDragDropOperation> Current = FSlateApplication::Get().GetDragDroppingContent();
+	// A drag made by holding the button down cannot see a new left press, so this is only ever the pick-up.
+	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && Current.IsValid() && Current == TileDrag.Pin())
+	{
+		FSlateApplication::Get().CancelDragDrop();
+	}
+	return FReply::Unhandled();
 }
 
 FReply SKhaosPaletteTab::OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
@@ -780,6 +800,7 @@ void SKhaosPaletteTab::RebuildItems()
 {
 	AllItems.Reset();
 	SelectedItems.Reset();
+	SelectionAnchor.Reset();
 	Categories.Reset();
 
 	if (const UKhaosPalette* CurrentPalette = Palette.Get())
@@ -833,12 +854,14 @@ void SKhaosPaletteTab::RefreshFilteredItems()
 
 void SKhaosPaletteTab::RebuildGrid()
 {
+	DisplayedItems.Reset();
 	if (!GridBox.IsValid())
 	{
 		return;
 	}
 	if (!bGroupByCategory)
 	{
+		DisplayedItems = FilteredItems;
 		GridBox->SetContent(MakeTileWrap(FilteredItems));
 		return;
 	}
@@ -861,6 +884,7 @@ void SKhaosPaletteTab::RebuildGrid()
 	{
 		if (const TArray<FItemPtr>* Items = Groups.Find(Category))
 		{
+			DisplayedItems.Append(*Items);
 			Sections->AddSlot()
 			.AutoHeight()
 			.Padding(0.f, 0.f, 0.f, SectionGap)
@@ -918,12 +942,10 @@ TSharedRef<SWidget> SKhaosPaletteTab::MakeCategorySection(FName Category, const 
 		.bReorderable(!Category.IsNone());
 
 	const FString Key = SectionKey(Category);
-	const bool* SessionCollapsed = SectionCollapsed.Find(Key);
-	const bool bInitiallyCollapsed = SessionCollapsed ? *SessionCollapsed : (CategoryData && CategoryData->bCollapsedByDefault);
 	TSharedRef<SExpandableArea> Area = SNew(SExpandableArea)
 		.Style(&FKhaosPaletteStyle::Get().GetWidgetStyle<FExpandableAreaStyle>("KhaosPalette.CategoryArea"))
 		.AreaTitlePadding(FMargin(0.f))
-		.InitiallyCollapsed(bInitiallyCollapsed)
+		.InitiallyCollapsed(IsSectionCollapsed(Category))
 		.OnAreaExpansionChanged_Lambda([this, Key](bool bExpanded) { SectionCollapsed.Add(Key, !bExpanded); })
 		.BorderImage(FAppStyle::GetBrush("PaletteToolBar.ExpandableAreaHeader"))
 		.BodyBorderImage(FAppStyle::GetBrush("PaletteToolBar.ExpandableAreaBody"))
@@ -952,11 +974,17 @@ TSharedRef<SWidget> SKhaosPaletteTab::MakeCategorySection(FName Category, const 
 			.Padding(0.f)
 			.OnMouseButtonUp(this, &SKhaosPaletteTab::OnCategorySectionMouseUp, Category)
 			[
-				SNew(SAssetDropTarget)
-				.bSupportsMultiDrop(true)
+				// Recognises only drags it would accept, so it never shows the red "can't drop" frame: picking
+				// a tile up with click to place starts a drag inside its own section, which is no move at all.
+				SNew(SDropTarget)
 				.bOnlyRecognizeOnDragEnter(true)
-				.OnAreAssetsAcceptableForDrop(this, &SKhaosPaletteTab::AreAssetsAcceptableForCategoryDrop, Category)
-				.OnAssetsDropped(this, &SKhaosPaletteTab::OnAssetsDroppedOnCategory, Category)
+				.OnIsRecognized_Lambda([this, Category](TSharedPtr<FDragDropOperation> Op) { return AreAssetsAcceptableForCategoryDrop(DraggedAssets(Op), Category); })
+				.OnAllowDrop_Lambda([this, Category](TSharedPtr<FDragDropOperation> Op) { return AreAssetsAcceptableForCategoryDrop(DraggedAssets(Op), Category); })
+				.OnDropped_Lambda([this, Category](const FGeometry&, const FDragDropEvent& Event)
+				{
+					OnAssetsDroppedOnCategory(Event, DraggedAssets(Event.GetOperation()), Category);
+					return FReply::Handled();
+				})
 				[
 					Area
 				]
@@ -969,24 +997,70 @@ FString SKhaosPaletteTab::SectionKey(FName Category) const
 	return FString::Printf(TEXT("%s|%s"), Palette.IsValid() ? *Palette->GetPathName() : TEXT(""), *Category.ToString());
 }
 
+namespace
+{
+	// A tile's border and padding around its thumbnail (SKhaosPaletteTile: 4 px each side).
+	constexpr float TileChrome = 8.f;
+
+	// Holds one grid's wrap box and remembers how wide it was last laid out, so its tiles can size themselves to
+	// fill each row exactly instead of leaving a gap at the end.
+	class SKhaosPaletteTileWrap : public SCompoundWidget
+	{
+	public:
+		SLATE_BEGIN_ARGS(SKhaosPaletteTileWrap) {}
+			SLATE_DEFAULT_SLOT(FArguments, Content)
+		SLATE_END_ARGS()
+
+		void Construct(const FArguments& InArgs)
+		{
+			ChildSlot[InArgs._Content.Widget];
+		}
+
+		virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override
+		{
+			Width = AllottedGeometry.GetLocalSize().X;
+		}
+
+		float Width = 0.f;
+	};
+}
+
+float SKhaosPaletteTab::GetCellSize(float AvailableWidth) const
+{
+	// The slider sets the smallest a tile may be; as many as fit go in a row, and they share what is left over.
+	if (AvailableWidth <= 0.f)
+	{
+		return TileSize;
+	}
+	const int32 Columns = FMath::Max(1, FMath::FloorToInt(AvailableWidth / (TileSize + TileChrome)));
+	// Floor, and half a pixel to spare, so rounding never pushes the last tile onto the next row.
+	return FMath::Max(MinTileSize, FMath::FloorToFloat((AvailableWidth - 0.5f) / Columns) - TileChrome);
+}
+
 TSharedRef<SWidget> SKhaosPaletteTab::MakeTileWrap(const TArray<FItemPtr>& Items)
 {
 	TSharedRef<SWrapBox> Wrap = SNew(SWrapBox).UseAllottedSize(true);
+	TSharedRef<SKhaosPaletteTileWrap> Holder = SNew(SKhaosPaletteTileWrap)[Wrap];
+	const TAttribute<float> CellSize = TAttribute<float>::CreateLambda([this, WeakHolder = TWeakPtr<SKhaosPaletteTileWrap>(Holder)]()
+	{
+		const TSharedPtr<SKhaosPaletteTileWrap> Pinned = WeakHolder.Pin();
+		return GetCellSize(Pinned.IsValid() ? Pinned->Width : 0.f);
+	});
 	for (const FItemPtr& Item : Items)
 	{
 		Wrap->AddSlot()
 		[
-			MakeTile(Item)
+			MakeTile(Item, CellSize)
 		];
 	}
-	return Wrap;
+	return Holder;
 }
 
-TSharedRef<SWidget> SKhaosPaletteTab::MakeTile(FItemPtr Item)
+TSharedRef<SWidget> SKhaosPaletteTab::MakeTile(FItemPtr Item, const TAttribute<float>& CellSize)
 {
 	return SNew(SKhaosPaletteTile)
 		.Item(Item)
-		.TileSize(TileSize)
+		.TileSize(CellSize)
 		.IsSelected_Lambda([this, Item]() { return SelectedItems.Contains(Item); })
 		.OnClicked(FOnKhaosPaletteTileEvent::CreateSP(this, &SKhaosPaletteTab::OnTileClicked))
 		.OnReleased(FOnKhaosPaletteTileEvent::CreateSP(this, &SKhaosPaletteTab::OnTileReleased))
@@ -1031,19 +1105,77 @@ TSharedRef<SWidget> SKhaosPaletteTab::MakeTileContextMenu()
 	return MenuBuilder.MakeWidget();
 }
 
+bool SKhaosPaletteTab::IsSectionCollapsed(FName Category) const
+{
+	if (const bool* SessionCollapsed = SectionCollapsed.Find(SectionKey(Category)))
+	{
+		return *SessionCollapsed;
+	}
+	const FKhaosPaletteCategory* CategoryData = Palette.IsValid() ? Palette->FindCategory(Category) : nullptr;
+	return CategoryData && CategoryData->bCollapsedByDefault;
+}
+
+TArray<SKhaosPaletteTab::FItemPtr> SKhaosPaletteTab::GetSelectableItems() const
+{
+	if (!bGroupByCategory)
+	{
+		return DisplayedItems;
+	}
+	return DisplayedItems.FilterByPredicate([this](const FItemPtr& Item) { return !IsSectionCollapsed(Item->Category); });
+}
+
+void SKhaosPaletteTab::SelectRange(FItemPtr From, FItemPtr To, bool bAddToSelection)
+{
+	const TArray<FItemPtr> Selectable = GetSelectableItems();
+	int32 FromIndex = Selectable.IndexOfByKey(From);
+	const int32 ToIndex = Selectable.IndexOfByKey(To);
+	if (ToIndex == INDEX_NONE)
+	{
+		return;
+	}
+	if (FromIndex == INDEX_NONE)
+	{
+		FromIndex = ToIndex; // no anchor, or it is hidden now: the range is just the clicked tile
+	}
+	if (!bAddToSelection)
+	{
+		SelectedItems.Reset();
+	}
+	for (int32 Index = FMath::Min(FromIndex, ToIndex); Index <= FMath::Max(FromIndex, ToIndex); ++Index)
+	{
+		SelectedItems.Add(Selectable[Index]);
+	}
+}
+
+// Content Browser selection: click selects one, Ctrl-click toggles one, Shift-click selects from the last
+// clicked tile to this one (Ctrl+Shift adds that range). A plain press on a tile that is already selected keeps
+// the selection, so the whole selection can be dragged or picked up; the release narrows it (OnTileReleased).
 FReply SKhaosPaletteTab::OnTileClicked(FItemPtr Item, const FPointerEvent& MouseEvent)
 {
-	if (MouseEvent.IsControlDown())
+	if (MouseEvent.IsShiftDown())
+	{
+		SelectRange(SelectionAnchor.IsValid() ? SelectionAnchor : Item, Item, MouseEvent.IsControlDown());
+		if (!SelectionAnchor.IsValid())
+		{
+			SelectionAnchor = Item;
+		}
+	}
+	else if (MouseEvent.IsControlDown())
 	{
 		if (!SelectedItems.Remove(Item))
 		{
 			SelectedItems.Add(Item);
 		}
+		SelectionAnchor = Item;
 	}
-	else if (!SelectedItems.Contains(Item))
+	else
 	{
-		SelectedItems.Reset();
-		SelectedItems.Add(Item);
+		if (!SelectedItems.Contains(Item))
+		{
+			SelectedItems.Reset();
+			SelectedItems.Add(Item);
+		}
+		SelectionAnchor = Item;
 	}
 	return FReply::Handled();
 }
@@ -1073,29 +1205,49 @@ FReply SKhaosPaletteTab::OnTileReleased(FItemPtr Item, const FPointerEvent& Mous
 	// Click to place: begin the same asset drag on release. With no button held, Slate keeps routing it as a
 	// drag until the next button release drops it (FSlateApplication::RoutePointerUpEvent) or Escape cancels.
 	// Modifier clicks only edit the selection.
-	if (!bClickToPlace || MouseEvent.IsControlDown() || MouseEvent.IsShiftDown() || FSlateApplication::Get().IsDragDropping())
+	if (MouseEvent.IsControlDown() || MouseEvent.IsShiftDown() || FSlateApplication::Get().IsDragDropping())
 	{
+		return FReply::Unhandled();
+	}
+	if (!bClickToPlace)
+	{
+		// A plain click that did not drag narrows a multi-selection to this tile, as in the Content Browser.
+		SelectedItems.Reset();
+		SelectedItems.Add(Item);
 		return FReply::Unhandled();
 	}
 	return OnTileDragRequested(Item, MouseEvent);
 }
 
+// Always the one tile under the cursor, never the selection: the viewport would drop every asset of a
+// multi-asset drag on the same spot. Dropped on a category section, it carries the selection (WithSelection).
 FReply SKhaosPaletteTab::OnTileDragRequested(FItemPtr Item, const FPointerEvent& MouseEvent)
 {
-	const TArray<FItemPtr> Items = SelectedItems.Contains(Item) ? SelectedItems.Array() : TArray<FItemPtr>{ Item };
-	TArray<FAssetData> Assets;
-	for (const FItemPtr& DraggedItem : Items)
-	{
-		if (DraggedItem->Thumbnail.IsValid())
-		{
-			Assets.Add(DraggedItem->AssetData);
-		}
-	}
-	if (Assets.IsEmpty())
+	if (!Item.IsValid() || !Item->Thumbnail.IsValid())
 	{
 		return FReply::Unhandled();
 	}
-	return FReply::Handled().BeginDragDrop(FAssetDragDropOp::New(MoveTemp(Assets)));
+	const TSharedRef<FAssetDragDropOp> Operation = FAssetDragDropOp::New(Item->AssetData);
+	TileDrag = Operation;
+	return FReply::Handled().BeginDragDrop(Operation);
+}
+
+TArray<FAssetData> SKhaosPaletteTab::WithSelection(TArrayView<FAssetData> Assets, const TSharedPtr<FDragDropOperation>& Operation) const
+{
+	TArray<FAssetData> Result(Assets);
+	const bool bOwnTileDrag = Operation.IsValid() && Operation == TileDrag.Pin();
+	const bool bDraggedSelected = Algo::AnyOf(SelectedItems, [&Assets](const FItemPtr& Item)
+	{
+		return Assets.ContainsByPredicate([&Item](const FAssetData& Asset) { return Asset.GetSoftObjectPath() == Item->AssetData.GetSoftObjectPath(); });
+	});
+	if (bOwnTileDrag && bDraggedSelected)
+	{
+		for (const FItemPtr& Item : SelectedItems)
+		{
+			Result.AddUnique(Item->AssetData);
+		}
+	}
+	return Result;
 }
 
 EVisibility SKhaosPaletteTab::GetEmptyHintVisibility() const
@@ -1148,14 +1300,14 @@ void SKhaosPaletteTab::OnAssetsDropped(const FDragDropEvent& DragDropEvent, TArr
 	}
 }
 
-bool SKhaosPaletteTab::AreAssetsAcceptableForCategoryDrop(TArrayView<FAssetData> Assets, FName Category) const
+bool SKhaosPaletteTab::AreAssetsAcceptableForCategoryDrop(TArrayView<FAssetData> InAssets, FName Category) const
 {
 	const UKhaosPalette* CurrentPalette = Palette.Get();
 	if (!CurrentPalette)
 	{
 		return false;
 	}
-	for (const FAssetData& AssetData : Assets)
+	for (const FAssetData& AssetData : WithSelection(InAssets, FSlateApplication::Get().GetDragDroppingContent()))
 	{
 		if (AssetData.IsInstanceOf(UKhaosPalette::StaticClass()))
 		{
@@ -1177,7 +1329,8 @@ void SKhaosPaletteTab::OnAssetsDroppedOnCategory(const FDragDropEvent& DragDropE
 	{
 		return;
 	}
-	const TArray<FSoftObjectPath> Paths = DroppablePaths(Assets);
+	TArray<FAssetData> WithSelected = WithSelection(Assets, DragDropEvent.GetOperation());
+	const TArray<FSoftObjectPath> Paths = DroppablePaths(WithSelected);
 	const FScopedTransaction Transaction(LOCTEXT("AddToCategoryTransaction", "Add to Category"));
 	if (CurrentPalette->SetCategory(Paths, Category) + CurrentPalette->AddAssets(Paths, Category) > 0)
 	{

@@ -14,7 +14,7 @@ class SKhaosPaletteTile : public SCompoundWidget
 public:
 	SLATE_BEGIN_ARGS(SKhaosPaletteTile) : _TileSize(96.f) {}
 		SLATE_ARGUMENT(TSharedPtr<FKhaosPaletteTileItem>, Item)
-		SLATE_ARGUMENT(float, TileSize)
+		SLATE_ATTRIBUTE(float, TileSize) // thumbnail width and height; the tab stretches it to fill a row
 		SLATE_ATTRIBUTE(bool, IsSelected)
 		SLATE_EVENT(FOnKhaosPaletteTileEvent, OnClicked)
 		SLATE_EVENT(FOnKhaosPaletteTileEvent, OnReleased) // left button up on the tile without a drag having started
