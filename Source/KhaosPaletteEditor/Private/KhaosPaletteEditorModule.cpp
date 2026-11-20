@@ -109,10 +109,11 @@ void FKhaosPaletteEditorModule::RegisterMenus()
 	}));
 
 	// Level editor: right-click actors -> Add to Palette (resolves actors to their source blueprint/mesh).
-	// Sits above the engine's Preview section (Play From Here) rather than at the very end of the menu.
-	const FToolMenuInsert AbovePreview("ActorPreview", EToolMenuInsertType::Before);
+	// At the top, before the engine's Asset Options, as the Content Browser shows it at the top of its menu too.
+	// The engine asks plugins not to extend Asset Options itself, so this is a section of its own.
+	const FToolMenuInsert AtTop("ActorGeneral", EToolMenuInsertType::Before);
 	UToolMenu* ActorMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.ActorContextMenu");
-	ActorMenu->AddDynamicSection("KhaosPalette", FNewToolMenuDelegate::CreateLambda([SubMenuIcon, AbovePreview](UToolMenu* InMenu)
+	ActorMenu->AddDynamicSection("KhaosPalette", FNewToolMenuDelegate::CreateLambda([SubMenuIcon, AtTop](UToolMenu* InMenu)
 	{
 		TArray<AActor*> SelectedActors;
 		if (GEditor)
@@ -124,7 +125,7 @@ void FKhaosPaletteEditorModule::RegisterMenus()
 		{
 			return;
 		}
-		FToolMenuSection& Section = InMenu->AddSection("KhaosPalette", LOCTEXT("PaletteSection", "Khaos Palette"), AbovePreview);
+		FToolMenuSection& Section = InMenu->AddSection("KhaosPalette", LOCTEXT("PaletteSection", "Khaos Palette"), AtTop);
 		Section.AddSubMenu(
 			"KhaosPaletteAddTo",
 			LOCTEXT("AddActorsToPalette", "Add to Palette"),
@@ -132,7 +133,7 @@ void FKhaosPaletteEditorModule::RegisterMenus()
 			FNewToolMenuDelegate::CreateStatic(&KhaosPaletteEditor::BuildAddToPaletteMenu, Assets),
 			/*bInOpenSubMenuOnClick*/ false,
 			SubMenuIcon);
-	}), AbovePreview);
+	}), AtTop);
 }
 
 TSharedRef<SDockTab> FKhaosPaletteEditorModule::SpawnPaletteTab(const FSpawnTabArgs& Args)
