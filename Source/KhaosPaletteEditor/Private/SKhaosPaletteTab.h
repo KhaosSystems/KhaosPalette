@@ -91,6 +91,8 @@ private:
 	FReply OnTileDoubleClicked(FItemPtr Item, const FPointerEvent& MouseEvent);
 	FReply OnTileContextMenu(FItemPtr Item, const FPointerEvent& MouseEvent);
 	FReply OnTileDragRequested(FItemPtr Item, const FPointerEvent& MouseEvent);
+	// Ends any placement in progress and starts this one, keeping PlacingAsset up to date.
+	void StartPlacement(struct FKhaosPalettePlacementArgs&& Args, bool bHighlight);
 	// A drag this tab started from a selected tile stands for the whole selection when dropped on a category.
 	TArray<FAssetData> WithSelection(TArrayView<FAssetData> Assets, const TSharedPtr<FDragDropOperation>& Operation) const;
 	bool IsSectionCollapsed(FName Category) const;
@@ -142,6 +144,10 @@ private:
 	TSet<FItemPtr> SelectedItems;
 	FItemPtr SelectionAnchor; // the last plain or Ctrl click, where a Shift-click range starts
 	TWeakPtr<FDragDropOperation> TileDrag; // the last drag started from a tile
+	TSharedPtr<class FKhaosPalettePlacement> Placement; // click to place in progress, or the last one
+	FSoftObjectPath PlacingAsset; // highlighted in the grid while it is being placed
+	bool bRandomFromSelection = false;
+	bool bKeepPlacing = false;
 	TArray<FName> Categories; // display order, from the palette
 	// "<palette path>|<category>" -> collapsed, for sections the user toggled this session; grid rebuilds keep
 	// that state. Sections without an entry follow the category's bCollapsedByDefault.

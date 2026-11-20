@@ -16,6 +16,7 @@ public:
 		SLATE_ARGUMENT(TSharedPtr<FKhaosPaletteTileItem>, Item)
 		SLATE_ATTRIBUTE(float, TileSize) // thumbnail width and height; the tab stretches it to fill a row
 		SLATE_ATTRIBUTE(bool, IsSelected)
+		SLATE_ATTRIBUTE(bool, IsPlacing) // the asset being placed in the level right now
 		SLATE_EVENT(FOnKhaosPaletteTileEvent, OnClicked)
 		SLATE_EVENT(FOnKhaosPaletteTileEvent, OnReleased) // left button up on the tile without a drag having started
 		SLATE_EVENT(FOnKhaosPaletteTileEvent, OnDoubleClicked)
@@ -36,6 +37,7 @@ private:
 
 	TSharedPtr<FKhaosPaletteTileItem> Item;
 	TAttribute<bool> IsSelected;
+	TAttribute<bool> IsPlacing;
 	FOnKhaosPaletteTileEvent OnClickedDelegate;
 	FOnKhaosPaletteTileEvent OnReleasedDelegate;
 	FOnKhaosPaletteTileEvent OnDoubleClickedDelegate;
