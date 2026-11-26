@@ -1,5 +1,5 @@
-# Build, test and release with KhaosSystems/unreal-actions. To release, run this workflow on main
-# with "Release the next version" ticked; the version comes from the commit messages.
+# Build, test and release with KhaosSystems/unreal-actions. To release, merge the release pull
+# request release-please keeps open; edit its CHANGELOG.md lines first.
 name: CI
 
 on:
@@ -10,25 +10,23 @@ on:
   pull_request:
     paths-ignore: ['Marketing/**']
   workflow_dispatch:
-    inputs:
-      release:
-        description: Release the next version
-        type: boolean
-        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
-  # Superseded branch and pull request builds are cancelled; releases always run to the end.
-  cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref_type == 'branch') }}
+  # Superseded pull request builds are cancelled. Pushes to main run to the end: the one that
+  # merges the release pull request makes the release.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   plugin:
     uses: KhaosSystems/unreal-actions/.github/workflows/plugin.yml@v1
     permissions:
       contents: write # releases and badges
+      issues: write # release-please's labels
+      pull-requests: write # the release pull request
     with:
       engine-versions: '["5.8"]'
-      release: ${{ inputs.release == true }}
+      release-please: true
       publish-docs: true
     secrets:
       discord-webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
