@@ -561,8 +561,8 @@ bool FKhaosPalettePlacement::HandleMouseWheelOrGestureEvent(FSlateApplication& S
 		// The scale snap step when scale snapping is on, else 10% at a time.
 		const float Step = GEditor->GetScaleGridSize();
 		Scale = Settings->SnapScaleEnabled && Step > 0.f
-			? FMath::Max(Step, Scale + Direction * Step)
-			: FMath::Clamp(Scale * (Direction > 0.f ? 1.1f : 1.f / 1.1f), 0.05f, 100.f);
+			? FMath::Max(FMath::Max(Step, 0.1f), Scale + Direction * Step)
+			: FMath::Clamp(Scale * (Direction > 0.f ? 1.1f : 1.f / 1.1f), 0.1f, 100.f);
 	}
 	else
 	{

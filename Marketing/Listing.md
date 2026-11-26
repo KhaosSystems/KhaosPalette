@@ -12,7 +12,9 @@ The props you place most, one click from the level.
 
 Set dressing means reaching for the same props again and again. Khaos Palette keeps them in one tab beside the viewport, sorted the way you work.
 
-Click a tile, then click where it goes. Pin the tab to the side and it fades out of the way while you build. Palettes are plain assets, so the whole team dresses levels from the same set.
+Click a tile, then click where it goes. A preview follows the cursor and snaps the way the actor will land: to the grid, and onto surfaces. Scroll with Shift to rotate and with Ctrl to scale, Shift-click to keep placing, and Tab to move to the next tile.
+
+Pin the tab to the side and it fades out of the way while you build. Palettes are plain assets, so the whole team dresses levels from the same set.
 
 Editor-only. Nothing ships in your game.
 
@@ -23,6 +25,12 @@ Anything you can drag into the viewport from the Content Browser: Blueprint acto
 
 **Do I have to use Click to Place?**
 No. Dragging works too, with the usual snapping. Escape cancels a click placement.
+
+**Does placing respect my snapping settings?**
+Yes. The preview uses the viewport's grid, rotation and scale snapping, and surface snapping and alignment, so the actor lands exactly where the preview shows.
+
+**Is placing undoable?**
+Yes. Each placement is one undo step, the same as dropping the asset from the Content Browser.
 
 **Can the team share palettes?**
 Yes. A palette is a data asset in your project, so it goes in source control like any other.
@@ -48,10 +56,10 @@ Create a palette with Content Browser > Add > Khaos > Khaos Palette, then press 
 - **Documentation:** https://docs.khaos.systems/unreal/khaos-palette/
 - **Important notes:** Create a palette with Content Browser > Add > Khaos > Khaos Palette. Open it with the Palette button on the toolbar.
 
-## Version notes (1.0.0)
+## Version notes
 
-First release.
+Paste the [CHANGELOG.md](../CHANGELOG.md) sections of every release since the version on Fab.
 
 ## Tags
 
-level design, set dressing, editor tool, placement, palette, workflow, environment art, prop placement
+level design, set dressing, editor tool, placement, palette, workflow, environment art, prop placement, snapping
