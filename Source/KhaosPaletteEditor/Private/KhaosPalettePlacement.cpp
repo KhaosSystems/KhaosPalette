@@ -26,6 +26,7 @@
 #include "Brushes/SlateRoundedBoxBrush.h"
 #include "Widgets/SOverlay.h"
 #include "Widgets/SBoxPanel.h"
+#include "Widgets/Images/SImage.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/SViewport.h"
@@ -205,11 +206,11 @@ void FKhaosPalettePlacement::Tick(const float DeltaTime, FSlateApplication& Slat
 
 namespace KhaosPalettePlacementStyle
 {
-	// Translucent dark panels and keycaps, in the editor's own greys.
-	// Like the editor's notification toasts: its notification colour, rounded, with the dropdown outline.
+	// Opaque, like the editor's own panels and toolbars: its panel colour, rounded, with the dropdown outline.
+	// Keycaps and the thumbnail frame below use the editor's input field colours.
 	const FSlateBrush* Panel()
 	{
-		static const FSlateRoundedBoxBrush Brush(FStyleColors::Notifications, 6.f, FStyleColors::DropdownOutline, 1.f);
+		static const FSlateRoundedBoxBrush Brush(FStyleColors::Panel, 6.f, FStyleColors::DropdownOutline, 1.f);
 		return &Brush;
 	}
 	// Keys look like the editor's input fields.
@@ -226,39 +227,51 @@ namespace KhaosPalettePlacementStyle
 	FSlateFontInfo Bold(int32 Size) { return FCoreStyle::GetDefaultFontStyle("Bold", Size); }
 	FSlateFontInfo Regular(int32 Size) { return FCoreStyle::GetDefaultFontStyle("Regular", Size); }
 
-	TSharedRef<SWidget> Key(const FText& Text)
+	// One keycap holding the whole combination ("Shift + Click"), a step quieter than the action beside it, so
+	// the eye reads what happens first and the key second.
+	TSharedRef<SWidget> Key(const TArray<FText>& Keys)
 	{
 		return SNew(SBorder)
 			.BorderImage(Keycap())
-			.Padding(FMargin(7.f, 2.f))
+			.Padding(FMargin(6.f, 1.f, 6.f, 2.f))
 			[
 				SNew(STextBlock)
-				.Text(Text)
-				.Font(Bold(9))
-				.ColorAndOpacity(FStyleColors::ForegroundHover)
+				.Text(FText::Join(FText::FromString(TEXT(" + ")), Keys))
+				.Font(Bold(8))
+				.ColorAndOpacity(FStyleColors::Foreground)
 			];
 	}
 
-	// One hint: its keys (joined by +) and what they do.
-	TSharedRef<SWidget> Hint(TArray<FText> Keys, const FText& Action)
+	// One hint: its keys and what they do.
+	TSharedRef<SWidget> Hint(const TArray<FText>& Keys, const FText& Action)
 	{
-		TSharedRef<SHorizontalBox> Row = SNew(SHorizontalBox);
-		for (int32 Index = 0; Index < Keys.Num(); ++Index)
-		{
-			if (Index > 0)
-			{
-				Row->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(4.f, 0.f)
-				[
-					SNew(STextBlock).Text(FText::FromString(TEXT("+"))).Font(Regular(9)).ColorAndOpacity(FStyleColors::Foreground)
-				];
-			}
-			Row->AddSlot().AutoWidth().VAlign(VAlign_Center)[Key(Keys[Index])];
-		}
-		Row->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(7.f, 0.f, 0.f, 0.f)
-		[
-			SNew(STextBlock).Text(Action).Font(Regular(9)).ColorAndOpacity(FStyleColors::Foreground)
-		];
-		return Row;
+		return SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.VAlign(VAlign_Center)
+			[
+				Key(Keys)
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.VAlign(VAlign_Center)
+			.Padding(8.f, 0.f, 0.f, 0.f)
+			[
+				SNew(STextBlock).Text(Action).Font(Regular(9)).ColorAndOpacity(FStyleColors::ForegroundHover)
+			];
+	}
+
+	// The thin rule between two hints.
+	TSharedRef<SWidget> Divider()
+	{
+		return SNew(SBox)
+			.WidthOverride(1.f)
+			.Padding(FMargin(0.f, 7.f))
+			[
+				SNew(SImage)
+				.Image(FAppStyle::GetBrush("WhiteBrush"))
+				.ColorAndOpacity(FStyleColors::Hover)
+			];
 	}
 }
 
@@ -290,32 +303,37 @@ void FKhaosPalettePlacement::UpdateOverlay(FLevelEditorViewportClient* Client)
 	const FText Scroll = NSLOCTEXT("KhaosPalettePlacement", "KeyScroll", "Scroll");
 	const FText Tab = NSLOCTEXT("KhaosPalettePlacement", "KeyTab", "Tab");
 	TSharedRef<SHorizontalBox> Hints = SNew(SHorizontalBox);
-	auto AddHint = [&Hints](TArray<FText> Keys, const FText& Action)
+	// Hints in one line, each padded evenly, with a thin rule between them.
+	auto AddHint = [&Hints](const TArray<FText>& Keys, const FText& Action)
 	{
-		Hints->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(Hints->NumSlots() > 0 ? FMargin(20.f, 0.f, 0.f, 0.f) : FMargin(0.f))
+		if (Hints->NumSlots() > 0)
+		{
+			Hints->AddSlot().AutoWidth()[Divider()];
+		}
+		Hints->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(FMargin(14.f, 7.f))
 		[
-			Hint(MoveTemp(Keys), Action)
+			Hint(Keys, Action)
 		];
 	};
 	if (Mode == EMode::Dragging || Mode == EMode::WaitingForDrag)
 	{
-		AddHint({ NSLOCTEXT("KhaosPalettePlacement", "KeyRelease", "Release") }, NSLOCTEXT("KhaosPalettePlacement", "ActPlace", "place"));
+		AddHint({ NSLOCTEXT("KhaosPalettePlacement", "KeyRelease", "Release") }, NSLOCTEXT("KhaosPalettePlacement", "ActPlace", "Place"));
 	}
 	else
 	{
-		AddHint({ Click }, NSLOCTEXT("KhaosPalettePlacement", "ActPlace", "place"));
+		AddHint({ Click }, NSLOCTEXT("KhaosPalettePlacement", "ActPlace", "Place"));
 		if (!bKeepPlacing)
 		{
-			AddHint({ Shift, Click }, NSLOCTEXT("KhaosPalettePlacement", "ActKeep", "keep placing"));
+			AddHint({ Shift, Click }, NSLOCTEXT("KhaosPalettePlacement", "ActKeep", "Keep placing"));
 		}
 		if (Assets.Num() > 1)
 		{
-			AddHint({ Tab }, NSLOCTEXT("KhaosPalettePlacement", "ActSwitch", "next"));
+			AddHint({ Tab }, NSLOCTEXT("KhaosPalettePlacement", "ActSwitch", "Next"));
 		}
 	}
-	AddHint({ Shift, Scroll }, NSLOCTEXT("KhaosPalettePlacement", "ActRotate", "rotate"));
-	AddHint({ Ctrl, Scroll }, NSLOCTEXT("KhaosPalettePlacement", "ActScale", "scale"));
-	AddHint({ NSLOCTEXT("KhaosPalettePlacement", "KeyEsc", "Esc") }, NSLOCTEXT("KhaosPalettePlacement", "ActStop", "stop"));
+	AddHint({ Shift, Scroll }, NSLOCTEXT("KhaosPalettePlacement", "ActRotate", "Rotate"));
+	AddHint({ Ctrl, Scroll }, NSLOCTEXT("KhaosPalettePlacement", "ActScale", "Scale"));
+	AddHint({ NSLOCTEXT("KhaosPalettePlacement", "KeyEsc", "Esc") }, NSLOCTEXT("KhaosPalettePlacement", "ActStop", "Stop"));
 
 	TSharedRef<SOverlay> Root = SNew(SOverlay).Visibility(EVisibility::HitTestInvisible);
 
@@ -409,7 +427,7 @@ void FKhaosPalettePlacement::UpdateOverlay(FLevelEditorViewportClient* Client)
 	[
 		SNew(SBorder)
 		.BorderImage(Panel())
-		.Padding(FMargin(14.f, 8.f))
+		.Padding(FMargin(4.f, 0.f))
 		[
 			Hints
 		]
