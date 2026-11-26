@@ -85,9 +85,11 @@ TSharedPtr<FKhaosPalettePlacement> FKhaosPalettePlacement::Begin(FKhaosPalettePl
 	// Keep only what can be placed, and start on the asked-for asset if it is among them.
 	const FSoftObjectPath StartPath = Args.Assets[Args.StartIndex].GetSoftObjectPath();
 	TArray<FAssetData> Placeable;
+	TArray<FText> Labels;
 	int32 StartIndex = 0;
-	for (const FAssetData& AssetData : Args.Assets)
+	for (int32 Index = 0; Index < Args.Assets.Num(); ++Index)
 	{
+		const FAssetData& AssetData = Args.Assets[Index];
 		UObject* Object = nullptr;
 		if (FindFactory(AssetData, Object))
 		{
@@ -96,6 +98,8 @@ TSharedPtr<FKhaosPalettePlacement> FKhaosPalettePlacement::Begin(FKhaosPalettePl
 				StartIndex = Placeable.Num();
 			}
 			Placeable.Add(AssetData);
+			const FText* Given = Args.Labels.IsValidIndex(Index) ? &Args.Labels[Index] : nullptr;
+			Labels.Add(Given && !Given->IsEmpty() ? *Given : FText::FromName(AssetData.AssetName));
 		}
 	}
 	if (Placeable.IsEmpty())
@@ -105,6 +109,7 @@ TSharedPtr<FKhaosPalettePlacement> FKhaosPalettePlacement::Begin(FKhaosPalettePl
 
 	const TSharedRef<FKhaosPalettePlacement> Placement = MakeShareable(new FKhaosPalettePlacement());
 	Placement->Assets = MoveTemp(Placeable);
+	Placement->Labels = MoveTemp(Labels);
 	Placement->bRandomAfterPlace = Args.bRandomAfterPlace;
 	Placement->bKeepPlacing = Args.bKeepPlacing;
 	Placement->OnEnded = MoveTemp(Args.OnEnded);
@@ -134,6 +139,7 @@ void FKhaosPalettePlacement::SelectAsset(int32 Index)
 	}
 	Current = Index;
 	Asset = Assets[Index];
+	Label = Labels[Index];
 	UObject* Object = nullptr;
 	Factory = FindFactory(Asset, Object);
 	AssetObject = Object;
@@ -207,11 +213,11 @@ void FKhaosPalettePlacement::Tick(const float DeltaTime, FSlateApplication& Slat
 
 namespace KhaosPalettePlacementStyle
 {
-	// Opaque, like the editor's own panels and toolbars: its panel colour, rounded, with the dropdown outline.
-	// Keycaps and the thumbnail frame below use the editor's input field colours.
+	// Opaque, like the editor's own panels and toolbars: its panel colour, rounded, with the 2 px dark border of the
+	// editor's windows. Keycaps and the thumbnail frame below use the editor's input field colours.
 	const FSlateBrush* Panel()
 	{
-		static const FSlateRoundedBoxBrush Brush(FStyleColors::Panel, 6.f, FStyleColors::DropdownOutline, 1.f);
+		static const FSlateRoundedBoxBrush Brush(FStyleColors::Panel, 6.f, FStyleColors::WindowBorder, 2.f);
 		return &Brush;
 	}
 	// Keys look like the editor's input fields.
@@ -384,7 +390,7 @@ void FKhaosPalettePlacement::UpdateOverlay(FLevelEditorViewportClient* Client)
 					.VAlign(VAlign_Bottom)
 					[
 						SNew(STextBlock)
-						.Text_Lambda([this]() { return FText::FromName(Asset.AssetName); })
+						.Text_Lambda([this]() { return Label; })
 						.Font(Bold(10))
 						.ColorAndOpacity(FStyleColors::ForegroundHover)
 					]

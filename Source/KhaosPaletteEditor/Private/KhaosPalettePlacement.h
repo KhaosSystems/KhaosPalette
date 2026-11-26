@@ -18,6 +18,8 @@ struct FKhaosPalettePlacementArgs
 	// What can be placed; scrolling over a viewport switches between them. Assets no actor factory can place are
 	// left out.
 	TArray<FAssetData> Assets;
+	// What the cursor label calls each of Assets, such as the palette tile's label. Missing or empty: the asset name.
+	TArray<FText> Labels;
 	// The one placed first.
 	int32 StartIndex = 0;
 	// After each placement, switch to a random other one of Assets.
@@ -94,10 +96,12 @@ private:
 	void Place();
 
 	TArray<FAssetData> Assets;
+	TArray<FText> Labels; // one per asset
 	int32 Current = INDEX_NONE;
 	bool bRandomAfterPlace = false;
 	bool bKeepPlacing = false;
 	FAssetData Asset; // Assets[Current]
+	FText Label; // Labels[Current]
 	TWeakObjectPtr<UObject> AssetObject;
 	TWeakObjectPtr<UActorFactory> Factory;
 	TFunction<void()> OnEnded;
