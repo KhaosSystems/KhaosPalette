@@ -12,7 +12,7 @@ The props you place most, one click from the level.
 
 Set dressing means reaching for the same props again and again. Khaos Palette keeps them in one tab beside the viewport, sorted the way you work.
 
-Click a tile, then click where it goes. A preview follows the cursor and snaps the way the actor will land: to the grid, and onto surfaces. Scroll with Shift to rotate and with Ctrl to scale, Shift-click to keep placing, and Tab to move to the next tile.
+Click a prop, then click where it goes. A live preview shows exactly where it will land, snapped to your grid and settled onto the surface, so you place it right the first time. Turn it, scale it and keep going, prop after prop, without leaving the viewport.
 
 Pin the tab to the side and it fades out of the way while you build. Palettes are plain assets, so the whole team dresses levels from the same set.
 
