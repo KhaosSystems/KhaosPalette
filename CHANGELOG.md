@@ -3,6 +3,19 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.0](https://github.com/KhaosSystems/KhaosPalette/compare/v1.1.0...v1.2.0) (2026-11-26)
+
+### Changed
+
+* Smoother placement preview.
+* The preview pops back in after each placement.
+* Placement panels and key hints match the editor's style.
+* Minimum placement scale is 0.1.
+
+### Fixed
+
+* Actors land exactly under the cursor.
+
 ## [1.1.0](https://github.com/KhaosSystems/KhaosPalette/compare/v1.0.2...v1.1.0) (2026-11-20)
 
 ### Added
