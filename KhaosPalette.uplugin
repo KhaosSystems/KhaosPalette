@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.0",
+	"VersionName": "1.2.0",
 	"FriendlyName": "Khaos Palette",
 	"Description": "Artist-authored palettes of placeable assets (blueprints, meshes, particles, sounds...) shown in a dockable tab for drag-and-drop set dressing.",
 	"Category": "Khaos",
