@@ -202,6 +202,7 @@ void FKhaosPalettePlacement::Tick(const float DeltaTime, FSlateApplication& Slat
 		return;
 	}
 	UpdatePreview(SlateApp.GetCursorPos());
+	EasePreview(DeltaTime);
 }
 
 namespace KhaosPalettePlacementStyle
@@ -632,7 +633,11 @@ FLevelEditorViewportClient* FKhaosPalettePlacement::FindViewportUnderCursor(cons
 		{
 			continue;
 		}
-		const FGeometry& Geometry = Widget->GetTickSpaceGeometry();
+		// Measure against the 3D view itself (the SViewport the scene renders into), not the whole viewport widget,
+		// which in 5.8 also holds the toolbar row: scaling the cursor by that taller box put the hit below the cursor.
+		const TSharedPtr<FSceneViewport> SceneViewport = Widget->GetSceneViewport();
+		const TSharedPtr<SViewport> Surface = SceneViewport.IsValid() ? SceneViewport->GetViewportWidget().Pin() : nullptr;
+		const FGeometry& Geometry = Surface.IsValid() ? Surface->GetTickSpaceGeometry() : Widget->GetTickSpaceGeometry();
 		const FVector2D LocalSize = Geometry.GetLocalSize();
 		const FIntPoint ViewportSize = Client->Viewport->GetSizeXY();
 		if (LocalSize.X <= 0.0 || LocalSize.Y <= 0.0 || ViewportSize.X <= 0 || ViewportSize.Y <= 0)
@@ -724,14 +729,66 @@ void FKhaosPalettePlacement::UpdatePreview(const FVector2D& ScreenPosition)
 		}
 		return;
 	}
-	if (!PreviewTransform.Equals(Transform) || PreviewActor->IsTemporarilyHiddenInEditor())
+	PreviewTransform = Transform;
+	if (PreviewActor->IsTemporarilyHiddenInEditor())
 	{
-		PreviewTransform = Transform;
-		PreviewActor->SetActorTransform(PreviewTransform);
+		// Appearing: straight to where it belongs, never sliding in from where it was last shown.
+		ShownTransform = PreviewTransform;
+		FTransform Drawn = ShownTransform;
+		Drawn.SetScale3D(Drawn.GetScale3D() * FMath::Max(GetPopScale(), 0.01f));
+		PreviewActor->SetActorTransform(Drawn);
 		PreviewActor->SetIsTemporarilyHiddenInEditor(false);
 		PreviewActor->PostEditMove(false);
 		Client->Invalidate();
 	}
+}
+
+void FKhaosPalettePlacement::EasePreview(float DeltaTime)
+{
+	// The preview glides to each new snapped spot, turn and scale instead of jumping; the actor is still placed
+	// at the snapped transform itself. Exponential easing, so it covers about 95% of the way in 0.1 s.
+	AActor* PreviewActor = Preview.Get();
+	const float Pop = GetPopScale();
+	const bool bPopping = Pop < 1.f || bPopEnding;
+	if (!PreviewActor || !bHasPlacement || PreviewActor->IsTemporarilyHiddenInEditor()
+		|| (!bPopping && ShownTransform.Equals(PreviewTransform, UE_KINDA_SMALL_NUMBER)))
+	{
+		return;
+	}
+	bPopEnding = Pop < 1.f; // one more frame at full size once the pop is over
+	constexpr float Speed = 30.f;
+	const float Alpha = 1.f - FMath::Exp(-Speed * DeltaTime);
+	FTransform Next;
+	Next.SetLocation(FMath::Lerp(ShownTransform.GetLocation(), PreviewTransform.GetLocation(), Alpha));
+	Next.SetRotation(FQuat::Slerp(ShownTransform.GetRotation(), PreviewTransform.GetRotation(), Alpha).GetNormalized());
+	Next.SetScale3D(FMath::Lerp(ShownTransform.GetScale3D(), PreviewTransform.GetScale3D(), Alpha));
+	// Close enough to see no difference: finish, so it stops redrawing.
+	if (Next.Equals(PreviewTransform, 0.05))
+	{
+		Next = PreviewTransform;
+	}
+	ShownTransform = Next;
+	FTransform Drawn = ShownTransform;
+	Drawn.SetScale3D(Drawn.GetScale3D() * FMath::Max(Pop, 0.01f));
+	PreviewActor->SetActorTransform(Drawn);
+	PreviewActor->PostEditMove(false);
+	GEditor->RedrawLevelEditingViewports(false);
+}
+
+float FKhaosPalettePlacement::GetPopScale() const
+{
+	// After a placement the preview grows back from nothing with a slight overshoot (ease-out-back), so the
+	// placed actor and the next preview read as two things.
+	constexpr double Duration = 0.22;
+	const double Elapsed = FPlatformTime::Seconds() - LastPlacedTime;
+	if (Elapsed >= Duration || LastPlacedTime <= 0.0)
+	{
+		return 1.f;
+	}
+	const float T = static_cast<float>(Elapsed / Duration);
+	constexpr float Overshoot = 0.6f; // peaks about 3% over full size
+	const float U = T - 1.f;
+	return 1.f + (Overshoot + 1.f) * U * U * U + Overshoot * U * U;
 }
 
 AActor* FKhaosPalettePlacement::GetOrCreatePreview(UWorld* World)
@@ -794,7 +851,10 @@ void FKhaosPalettePlacement::Place()
 	DestroyPreview(); // the next tick puts it back under the cursor
 	bHasPlacement = false;
 	// One undo step, selected afterwards, exactly as the engine places from a factory.
-	GEditor->UseActorFactory(ActorFactory, Asset, &Transform);
+	if (GEditor->UseActorFactory(ActorFactory, Asset, &Transform))
+	{
+		LastPlacedTime = FPlatformTime::Seconds();
+	}
 
 	if (bRandomAfterPlace && Assets.Num() > 1)
 	{

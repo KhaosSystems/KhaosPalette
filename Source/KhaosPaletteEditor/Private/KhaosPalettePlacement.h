@@ -79,6 +79,10 @@ private:
 	// Where the actor would go for the cursor at that pixel, snapped as the level editor's settings say.
 	bool ComputePlacement(FLevelEditorViewportClient& Client, const FIntPoint& Pixel, FTransform& OutTransform);
 	void UpdatePreview(const FVector2D& ScreenPosition);
+	// Moves the shown preview a step toward PreviewTransform.
+	void EasePreview(float DeltaTime);
+	// 0 to 1 (with a little overshoot) just after a placement, then 1.
+	float GetPopScale() const;
 	void HidePreview();
 	// The hint panel, shown over the viewport the cursor is in.
 	void UpdateOverlay(FLevelEditorViewportClient* Client);
@@ -99,7 +103,10 @@ private:
 	TFunction<void()> OnEnded;
 	TFunction<void(const FAssetData&)> OnAssetChanged;
 	TWeakObjectPtr<AActor> Preview;
-	FTransform PreviewTransform;
+	FTransform PreviewTransform; // where the actor would be placed: snapped, rotated, scaled
+	FTransform ShownTransform; // where the preview is drawn, easing toward PreviewTransform
+	double LastPlacedTime = 0.0;
+	bool bPopEnding = false;
 	enum class EMode : uint8
 	{
 		Click,           // places on a left click on a viewport; more with bKeepPlacing or Shift
