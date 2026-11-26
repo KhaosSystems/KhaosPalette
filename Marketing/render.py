@@ -44,17 +44,18 @@ SLIDES = [
         ("Categories", CATEGORY, GREEN, "right"), ("Drag or click", TILE, ORANGE, "right"),
         ("Fold away", FOLDED, PURPLE, "right")]},
     {"id": "02-drag", "layout": "close-up", "panel": "tab-large.png", "title": ("Drag", "it in"), "accent": RED},
-    # target: where the tile is being placed in scene.png, as page x, y and ring radius (right half of the image).
-    {"id": "03-click", "layout": "split", "panel": "tab.png", "title": ("Click a tile", "Click to place"), "accent": GREEN,
-     "target": (1600, 750, 150)},
-    {"id": "04-categories", "layout": "colour", "panel": "tab-menu.png", "title": ("Sort into", "categories"),
-     "accent": ORANGE},
-    {"id": "05-palettes", "layout": "large", "panel": "tab.png", "title": ("A palette", "per biome"), "accent": YELLOW},
-    {"id": "06-drawer", "layout": "drawer", "panel": "drawer.png", "title": ("Pin it", "to the side"), "accent": BLUE},
-    {"id": "07-fade", "layout": "drawer", "panel": "fade.png", "title": ("Fades while", "you work"), "accent": RED,
+    # Viewport shots while placing: the preview, the cursor label and the key hint bar.
+    {"id": "03-place", "layout": "full", "panel": "place.png", "title": ("Click", "to place"), "accent": GREEN},
+    {"id": "04-rotate", "layout": "full", "panel": "rotate.png", "title": ("Rotate", "and scale"), "accent": BLUE},
+    {"id": "05-keep", "layout": "full", "panel": "keep.png", "title": ("Keep", "placing"), "accent": ORANGE},
+    {"id": "06-categories", "layout": "colour", "panel": "tab-menu.png", "title": ("Sort into", "categories"),
+     "accent": PURPLE},
+    {"id": "07-palettes", "layout": "large", "panel": "tab.png", "title": ("A palette", "per biome"), "accent": YELLOW},
+    {"id": "08-drawer", "layout": "drawer", "panel": "drawer.png", "title": ("Pin it", "to the side"), "accent": BLUE},
+    {"id": "09-fade", "layout": "drawer", "panel": "fade.png", "title": ("Fades while", "you work"), "accent": RED,
      "faded": True},
-    {"id": "08-fill", "layout": "colour", "panel": "fill.png", "title": ("Add from", "anywhere"), "accent": PURPLE},
-    {"id": "09-asset", "layout": "colour", "panel": "asset.png", "title": ("Shared", "as assets"), "accent": GREEN},
+    {"id": "10-fill", "layout": "colour", "panel": "fill.png", "title": ("Add from", "anywhere"), "accent": ORANGE},
+    {"id": "11-asset", "layout": "colour", "panel": "asset.png", "title": ("Shared", "as assets"), "accent": GREEN},
 ]
 
 
