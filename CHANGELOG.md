@@ -3,6 +3,13 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.1](https://github.com/KhaosSystems/KhaosPalette/compare/v1.2.0...v1.2.1) (2026-11-26)
+
+
+### Fixed
+
+* placement label and key hints have the editor's window border and show the palette name ([#15](https://github.com/KhaosSystems/KhaosPalette/issues/15)) ([f174679](https://github.com/KhaosSystems/KhaosPalette/commit/f174679d616628b5e698002169bee857e6d69588))
+
 ## [1.2.0](https://github.com/KhaosSystems/KhaosPalette/compare/v1.1.0...v1.2.0) (2026-11-26)
 
 ### Changed
