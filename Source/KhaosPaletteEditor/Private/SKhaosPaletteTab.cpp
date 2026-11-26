@@ -1272,11 +1272,13 @@ FReply SKhaosPaletteTab::OnTileReleased(FItemPtr Item, const FPointerEvent& Mous
 				Args.StartIndex = Args.Assets.Num();
 			}
 			Args.Assets.Add(Displayed->AssetData);
+			Args.Labels.Add(Displayed->Label);
 		}
 	}
 	if (Args.Assets.IsEmpty() && Item->Thumbnail.IsValid())
 	{
 		Args.Assets.Add(Item->AssetData);
+		Args.Labels.Add(Item->Label);
 	}
 	Args.bRandomAfterPlace = bRandomFromSelection;
 	Args.bKeepPlacing = bKeepPlacing;
@@ -1298,6 +1300,7 @@ FReply SKhaosPaletteTab::OnTileDragRequested(FItemPtr Item, const FPointerEvent&
 	// viewport, our placement takes it over there, so the preview snaps like a click placement.
 	FKhaosPalettePlacementArgs Args;
 	Args.Assets.Add(Item->AssetData);
+	Args.Labels.Add(Item->Label);
 	Args.FromDrag = Operation;
 	// No highlight: most drags that stay in the palette are organising, not placing.
 	StartPlacement(MoveTemp(Args), /*bHighlight*/ false);
